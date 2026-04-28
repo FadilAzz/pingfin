@@ -584,7 +584,7 @@ async function loadBanks() {
     const tbody = document.querySelector('#tbl-banks tbody');
     if (!banks.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="4">Geen banken</td></tr>'; return; }
     tbody.innerHTML = banks.map(b => `<tr>
-      <td class="mono"><b>${b.bic || b.bank_bic || '–'}</b></td>
+      <td class="mono"><b>${b.id || b.bic || b.bank_bic || '–'}</b></td>
       <td>${b.name || b.bank_name || '–'}</td>
       <td>${b.type || b.bank_type || '–'}</td>
       <td style="font-size:.75rem;color:var(--muted)">${b.base_url || b.url || ''}</td>
@@ -595,7 +595,7 @@ async function loadBanks() {
 
 function populateBankDropdowns() {
   const opts = knownBanks.map(b => {
-    const bic = b.bic || b.bank_bic || '';
+    const bic = b.id || b.bic || b.bank_bic || '';
     const name = b.name || b.bank_name || bic;
     return `<option value="${bic}">${bic} – ${name}</option>`;
   }).join('');

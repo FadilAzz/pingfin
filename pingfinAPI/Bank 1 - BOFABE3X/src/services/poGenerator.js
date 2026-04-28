@@ -7,10 +7,11 @@ const OWN_BIC = process.env.BANK_BIC;
 // Vervang op dag 3 met echte BIC's via GET /api/banks
 const SAMPLE_BBS = ['GKCCBEBB', 'BBRUBEBB', 'KREDBEBB', 'CRLYBEBB', OWN_BIC];
 
-// Externe IBAN's (van andere teams) — pas aan op dag 3
+// Externe IBAN's (Geldige mod-97, o.a. van Bank 2)
 const SAMPLE_BAS = [
-  'BE27000000000001', 'BE97000000000002', 'BE70000000000003',
-  'BE43000000000004', 'BE16000000000005', 'BE86000000000006',
+  'BE72599632030243', 'BE47902229270183', 'BE87204679047275',
+  'BE29989287756318', 'BE07278498715924', 'BE91076002915577',
+  'BE83449104739265', 'BE95630165785956'
 ];
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
