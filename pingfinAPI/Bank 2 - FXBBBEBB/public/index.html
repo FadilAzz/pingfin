@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PingFin Bank</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">PingFin Bank</div>
+        <nav>
+            <ul>
+                <li><span id="bank-bic-display">BIC: Laden...</span></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="card" id="dashboard">
+            <h2>Mijn Rekening</h2>
+            <div class="account-info">
+                <div class="info-group">
+                    <p class="label">IBAN Rekeningnummer</p>
+                    <p class="value" id="display-iban">Laden...</p>
+                </div>
+                <div class="info-group">
+                    <p class="label">Actueel Saldo</p>
+                    <p class="value balance" id="display-balance">€ 0,00</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card" id="transfer">
+            <h2>Geld Overmaken</h2>
+            <form id="transfer-form">
+                <div class="form-group">
+                    <label for="input-iban">Naar Rekening (IBAN):</label>
+                    <input type="text" id="input-iban" placeholder="Bijv. BE19384756283910" required>
+                </div>
+                <div class="form-group">
+                    <label for="input-amount">Bedrag (€):</label>
+                    <input type="number" id="input-amount" step="0.01" min="0.01" placeholder="0.00" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="input-message">Mededeling (optioneel):</label>
+                    <input type="text" id="input-message" placeholder="Waar is deze betaling voor?">
+                </div>
+
+                <button type="submit" id="btn-submit">Verzenden</button>
+                <div id="transfer-message" class="hidden"></div>
+            </form>
+        </section>
+
+        <section class="card" id="history">
+            <h2>Transactiegeschiedenis</h2>
+            <div class="table-responsive">
+                <table id="transactions-table">
+                    <thead>
+                        <tr>
+                            <th>Datum &amp; Tijd</th>
+                            <th>Omschrijving (PO_ID)</th>
+                            <th>Status</th>
+                            <th>Bedrag</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-tbody">
+                        <tr>
+                            <td colspan="4" class="text-center">Transacties laden...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
