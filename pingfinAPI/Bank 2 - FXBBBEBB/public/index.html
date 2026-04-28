@@ -1,161 +1,1379 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <title>Pingfin Bank — Fadil Azzouzi</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pingfin Bank</title>
+<meta name="description" content="Pingfin 2026 SEPA Bank – Payment Order management dashboard">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --p:#1e40af;--pd:#1e3a8a;--pl:#dbeafe;--p2:#3b82f6;--p3:#60a5fa;
+  --ok:#16a34a;--okl:#dcfce7;
+  --warn:#d97706;--warnl:#fef3c7;
+  --err:#dc2626;--errl:#fee2e2;
+  --grey:#6b7280;--border:#e5e7eb;--bg:#f0f4f8;--card:#fff;
+  --text:#111827;--muted:#6b7280;
+  --radius:10px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px -2px rgba(0,0,0,.1),0 2px 6px -2px rgba(0,0,0,.06);
+  --shadow-lg:0 10px 30px -5px rgba(0,0,0,.12),0 4px 10px -4px rgba(0,0,0,.06);
+}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:14px;color:var(--text);background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased}
+a{color:var(--p)}
+.hidden{display:none!important}
+
+/* ── LOGIN ─────────────────────────────────────────────────────────────── */
+@keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(-45deg,#0f172a,#1e3a8a,#1d4ed8,#3b82f6);background-size:400% 400%;animation:gradShift 12s ease infinite;position:relative;overflow:hidden}
+#login-screen::before{content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(59,130,246,.25),transparent 70%);top:-100px;right:-100px;border-radius:50%;animation:float 8s ease-in-out infinite}
+#login-screen::after{content:'';position:absolute;width:400px;height:400px;background:radial-gradient(circle,rgba(96,165,250,.2),transparent 70%);bottom:-80px;left:-80px;border-radius:50%;animation:float 10s ease-in-out infinite reverse}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-30px) scale(1.05)}}
+.login-card{background:rgba(255,255,255,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:16px;padding:2.5rem;width:380px;box-shadow:0 25px 60px rgba(0,0,0,.3),0 0 0 1px rgba(255,255,255,.1);position:relative;z-index:1;animation:cardEnter .6s ease}
+@keyframes cardEnter{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.login-card .logo{text-align:center;margin-bottom:1.75rem}
+.login-card .logo .icon{font-size:3rem;display:block;margin-bottom:.6rem;filter:drop-shadow(0 2px 8px rgba(30,64,175,.3))}
+.login-card .logo h1{font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,var(--pd),var(--p2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.login-card .logo p{color:var(--muted);font-size:.85rem;margin-top:.25rem}
+.login-card label{display:block;font-size:.75rem;font-weight:600;color:var(--muted);margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.06em}
+.login-card input{width:100%;padding:.65rem .85rem;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.95rem;margin-bottom:1rem;outline:none;transition:all .2s;background:rgba(255,255,255,.8);font-family:inherit}
+.login-card input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(30,64,175,.1)}
+.login-card .btn-login{width:100%;padding:.8rem;background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;border:none;border-radius:var(--radius);font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;letter-spacing:.02em}
+.login-card .btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(30,64,175,.35)}
+.login-card .btn-login:active{transform:translateY(0)}
+.login-card .btn-login:disabled{opacity:.6;cursor:default;transform:none;box-shadow:none}
+#login-error{color:var(--err);font-size:.85rem;margin-top:.75rem;text-align:center;min-height:1.2em}
+
+/* ── HEADER ────────────────────────────────────────────────────────────── */
+header{background:linear-gradient(135deg,var(--pd),var(--p));color:#fff;padding:.8rem 1.5rem;display:flex;align-items:center;gap:1rem;box-shadow:0 4px 20px rgba(30,64,175,.25);position:sticky;top:0;z-index:100}
+header .brand{font-size:1.15rem;font-weight:800;display:flex;align-items:center;gap:.5rem;flex:1;letter-spacing:.01em}
+header .brand span{font-size:1.5rem;filter:drop-shadow(0 1px 3px rgba(0,0,0,.2))}
+header .meta{font-size:.8rem;opacity:.85;display:flex;gap:1rem}
+header .meta b{opacity:1;font-weight:600}
+#btn-logout{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:.4rem 1rem;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:500;transition:all .2s;font-family:inherit;backdrop-filter:blur(10px)}
+#btn-logout:hover{background:rgba(255,255,255,.22);transform:translateY(-1px)}
+
+/* ── LAYOUT ─────────────────────────────────────────────────────────────── */
+#app{display:flex;flex-direction:column;min-height:100vh}
+.view{flex:1;padding:1.5rem;max-width:1400px;margin:0 auto;width:100%}
+
+/* ── TABS ───────────────────────────────────────────────────────────────── */
+.tab-nav{display:flex;gap:.3rem;background:var(--card);padding:.6rem .85rem;border-bottom:1px solid var(--border);flex-wrap:wrap;box-shadow:var(--shadow)}
+.tab-nav button{padding:.5rem 1rem;border:none;background:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:500;color:var(--muted);transition:all .2s;font-family:inherit}
+.tab-nav button:hover{background:var(--bg);color:var(--text)}
+.tab-nav button.active{background:var(--pl);color:var(--p);font-weight:600;box-shadow:0 1px 3px rgba(30,64,175,.1)}
+.tab-content{display:none;animation:tabFade .3s ease}
+.tab-content.active{display:block}
+@keyframes tabFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CARDS ──────────────────────────────────────────────────────────────── */
+.card{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:1.35rem;margin-bottom:1rem;transition:box-shadow .2s,transform .2s;border:1px solid rgba(0,0,0,.04)}
+.card:hover{box-shadow:var(--shadow-md)}
+.card h3{font-size:.95rem;font-weight:700;margin-bottom:1rem;color:var(--text);display:flex;align-items:center;gap:.5rem}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.card-header h3{margin-bottom:0}
+
+/* ── STATS GRID ─────────────────────────────────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:.75rem;margin-bottom:1rem}
+.stat-card{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:1.1rem 1.25rem;border-left:4px solid var(--border);transition:all .25s;cursor:default;border:1px solid rgba(0,0,0,.03)}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.stat-card.blue{border-left-color:var(--p);background:linear-gradient(135deg,#fff 60%,#eff6ff)}
+.stat-card.green{border-left-color:var(--ok);background:linear-gradient(135deg,#fff 60%,#f0fdf4)}
+.stat-card.yellow{border-left-color:var(--warn);background:linear-gradient(135deg,#fff 60%,#fffbeb)}
+.stat-card.red{border-left-color:var(--err);background:linear-gradient(135deg,#fff 60%,#fef2f2)}
+.stat-card .label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.35rem;font-weight:600}
+.stat-card .value{font-size:1.7rem;font-weight:800;color:var(--text);line-height:1}
+.stat-card .sub{font-size:.72rem;color:var(--muted);margin-top:.3rem}
+
+/* ── BUTTONS ────────────────────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s;text-decoration:none;font-family:inherit}
+.btn:disabled{opacity:.55;cursor:default;transform:none!important}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;box-shadow:0 2px 8px rgba(30,64,175,.2)}.btn-primary:hover:not(:disabled){box-shadow:0 4px 14px rgba(30,64,175,.3);transform:translateY(-1px)}
+.btn-success{background:linear-gradient(135deg,#15803d,var(--ok));color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.2)}.btn-success:hover:not(:disabled){box-shadow:0 4px 14px rgba(22,163,74,.3);transform:translateY(-1px)}
+.btn-danger{background:linear-gradient(135deg,#b91c1c,var(--err));color:#fff}.btn-danger:hover:not(:disabled){box-shadow:0 4px 14px rgba(220,38,38,.3);transform:translateY(-1px)}
+.btn-outline{background:transparent;color:var(--p);border:1.5px solid var(--p)}.btn-outline:hover:not(:disabled){background:var(--pl);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border)}.btn-ghost:hover:not(:disabled){border-color:var(--p);color:var(--p)}
+.btn-sm{padding:.32rem .7rem;font-size:.78rem}
+.actions{display:flex;flex-wrap:wrap;gap:.5rem}
+
+/* ── FORMS ──────────────────────────────────────────────────────────────── */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.85rem}
+.form-group{display:flex;flex-direction:column;gap:.35rem}
+.form-group label{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.form-group input,.form-group select,.form-group textarea{padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;outline:none;transition:all .2s;width:100%;background:#fff;font-family:inherit}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(30,64,175,.08)}
+.form-group .hint{font-size:.75rem;color:var(--muted)}
+.form-group .hint.err{color:var(--err)}
+.form-actions{margin-top:1rem;display:flex;gap:.5rem}
+
+/* ── TABLES ─────────────────────────────────────────────────────────────── */
+.tbl-wrap{overflow-x:auto;border-radius:var(--radius)}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+thead th{background:linear-gradient(180deg,#f8fafc,var(--bg));padding:.65rem .75rem;text-align:left;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-size:.7rem;border-bottom:2px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:all .15s}
+tbody tr:nth-child(even){background:rgba(241,245,249,.5)}
+tbody tr:hover{background:rgba(219,234,254,.35)}
+tbody tr:last-child{border-bottom:none}
+tbody td{padding:.6rem .75rem;color:var(--text);vertical-align:middle}
+tbody td.mono{font-family:'SF Mono',ui-monospace,monospace;font-size:.76rem;letter-spacing:-.01em}
+.empty-row td{text-align:center;color:var(--muted);padding:2.5rem;font-style:italic}
+
+/* ── BADGES ─────────────────────────────────────────────────────────────── */
+.badge{display:inline-block;padding:.2rem .6rem;border-radius:99px;font-size:.72rem;font-weight:600;line-height:1.4;white-space:nowrap;letter-spacing:.02em}
+.badge-ok{background:var(--okl);color:var(--ok)}
+.badge-err{background:var(--errl);color:var(--err)}
+.badge-warn{background:var(--warnl);color:var(--warn)}
+.badge-blue{background:var(--pl);color:var(--p)}
+.badge-grey{background:#f3f4f6;color:var(--grey)}
+
+/* ── TOAST ──────────────────────────────────────────────────────────────── */
+#toast-container{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column-reverse;gap:.5rem;pointer-events:none}
+.toast{padding:.8rem 1.25rem;border-radius:var(--radius);color:#fff;font-size:.88rem;font-weight:500;box-shadow:var(--shadow-lg);pointer-events:auto;animation:slide-in .3s cubic-bezier(.16,1,.3,1);max-width:360px;backdrop-filter:blur(8px)}
+.toast-ok{background:linear-gradient(135deg,#15803d,#16a34a)}
+.toast-err{background:linear-gradient(135deg,#991b1b,#dc2626)}
+.toast-info{background:linear-gradient(135deg,var(--pd),var(--p2))}
+@keyframes slide-in{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fade-out{to{opacity:0;transform:translateX(80px)}}
+
+/* ── MODAL ──────────────────────────────────────────────────────────────── */
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:center;justify-content:center;padding:1rem;animation:modalBgIn .2s ease}
+@keyframes modalBgIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--card);border-radius:16px;width:100%;max-width:480px;box-shadow:0 25px 60px rgba(0,0,0,.3);animation:modalIn .3s cubic-bezier(.16,1,.3,1)}
+@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-header h3{font-size:1.05rem;font-weight:700}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:1.3rem;line-height:1;padding:.25rem;transition:color .15s;border-radius:6px}
+.modal-close:hover{color:var(--err);background:var(--errl)}
+.modal-body{padding:1.5rem}
+.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:.5rem}
+
+/* ── SUB-TABS ───────────────────────────────────────────────────────────── */
+.sub-tabs{display:flex;gap:.3rem;margin-bottom:1rem;border-bottom:2px solid var(--border);padding-bottom:0}
+.sub-tab{padding:.45rem 1rem;border:none;background:none;cursor:pointer;font-size:.83rem;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;font-family:inherit}
+.sub-tab.active{color:var(--p);border-bottom-color:var(--p);font-weight:700}
+.sub-tab:hover:not(.active){color:var(--text)}
+.sub-content{display:none}
+.sub-content.active{display:block}
+
+/* ── BALANCE HIGHLIGHT ──────────────────────────────────────────────────── */
+.balance-big{font-size:2.8rem;font-weight:800;background:linear-gradient(135deg,var(--pd),var(--p2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;padding:1.5rem 0 .5rem}
+.balance-iban{text-align:center;color:var(--muted);font-family:'SF Mono',ui-monospace,monospace;font-size:.9rem;margin-bottom:1.5rem}
+
+/* ── MISC ───────────────────────────────────────────────────────────────── */
+.refresh-badge{font-size:.72rem;color:var(--muted);margin-left:auto}
+.section-title{font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem;margin-top:1.25rem}
+.iban-val{color:var(--ok);font-size:.75rem;margin-top:.2rem}
+.iban-err{color:var(--err);font-size:.75rem;margin-top:.2rem}
+
+/* ── SCROLLBAR ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+</style>
 </head>
 <body>
 
-  <!-- LOGIN SCREEN -->
-  <div id="login-screen" class="login-box">
-    <h2>🏦 Pingfin Bank Login</h2>
-    <p>Fadil Azzouzi — BIC: <span id="login-bic">...</span></p>
-    <input id="login-username" type="text" placeholder="Username">
-    <input id="login-password" type="password" placeholder="Password">
-    <button type="button" onclick="login()">Login</button>
-    <div id="login-error" class="login-error"></div>
+<!-- ═══════════════════════ LOGIN ═══════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="logo">
+      <span class="icon">🏦</span>
+      <h1 id="login-bank-name">Pingfin Bank</h1>
+      <p id="login-bank-bic">BIC: ...</p>
+    </div>
+    <label for="inp-user">Gebruikersnaam</label>
+    <input id="inp-user" type="text" placeholder="admin" autocomplete="username">
+    <label for="inp-pass">Wachtwoord</label>
+    <input id="inp-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+    <button type="button"class="btn-login" id="btn-login" onclick="doLogin()">Inloggen als admin</button>
+    <div id="login-error"></div>
+    <div style="display:flex;align-items:center;gap:.75rem;margin:1.25rem 0;color:var(--muted)">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <span style="font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em">of inloggen als klant</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+    <label for="inp-iban">IBAN</label>
+    <input id="inp-iban" type="text" placeholder="BE51233543472462" autocomplete="off" style="font-family:'SF Mono',ui-monospace,monospace;letter-spacing:.03em">
+    <span id="iban-login-hint" class="hint" style="margin-top:-.6rem;margin-bottom:.6rem"></span>
+    <button type="button"class="btn-login" id="btn-iban-login" onclick="doIbanLogin()" style="background:linear-gradient(135deg,#15803d,#16a34a)">Inloggen met IBAN</button>
+    <div id="iban-login-error" style="color:var(--err);font-size:.85rem;margin-top:.5rem;text-align:center;min-height:1.2em"></div>
   </div>
+</div>
 
-  <!-- APP -->
-  <div id="app" class="hidden">
-    <header>
-      <h1>🏦 Pingfin Bank Dashboard</h1>
-      <div id="bank-info" class="info">Loading...</div>
-      <button type="button" class="small danger" onclick="logout()">Logout</button>
-    </header>
+<!-- ═══════════════════════ APP ════════════════════════ -->
+<div id="app" class="hidden">
+  <header>
+    <div class="brand"><span>🏦</span><span id="hdr-bank"></span></div>
+    <div class="meta">
+      <span>BIC: <b id="hdr-bic"></b></span>
+      <span>Ingelogd als: <b id="hdr-user"></b></span>
+      <span id="hdr-role-badge"></span>
+    </div>
+    <button type="button"id="btn-logout" onclick="doLogout()">Uitloggen</button>
+  </header>
 
-    <div class="container">
+  <!-- ─── ADMIN VIEW ─────────────────────────────────────── -->
+  <div id="admin-view" class="hidden">
+    <div class="tab-nav" id="admin-tabs">
+      <button type="button"class="active" data-tab="dashboard">Dashboard</button>
+      <button type="button"data-tab="accounts">Accounts</button>
+      <button type="button"data-tab="payments">Betaling</button>
+      <button type="button"data-tab="po-monitor">PO Monitor</button>
+      <button type="button"data-tab="transactions">Transacties</button>
+      <button type="button"data-tab="logs">Logs</button>
+      <button type="button"data-tab="banks">Banken</button>
+      <button type="button"data-tab="users">Gebruikers</button>
+    </div>
+    <div class="view">
 
-      <!-- TABS -->
-      <div class="tabs">
-        <button type="button" class="tab active" data-tab="dashboard">Dashboard</button>
-        <button type="button" class="tab" data-tab="accounts">Accounts</button>
-        <button type="button" class="tab" data-tab="po_new">PO_NEW</button>
-        <button type="button" class="tab" data-tab="po_out">PO_OUT</button>
-        <button type="button" class="tab" data-tab="po_in">PO_IN</button>
-        <button type="button" class="tab" data-tab="ack_out">ACK_OUT</button>
-        <button type="button" class="tab" data-tab="ack_in">ACK_IN</button>
-        <button type="button" class="tab" data-tab="transactions">Transactions</button>
-        <button type="button" class="tab" data-tab="log">Log</button>
-        <button type="button" class="tab" data-tab="banks">Banks (CB)</button>
-      </div>
-
-      <!-- DASHBOARD TAB -->
-      <div id="tab-dashboard" class="tab-content">
-        <div id="stats" class="stats-grid"></div>
-
+      <!-- DASHBOARD -->
+      <div id="tab-dashboard" class="tab-content active">
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card blue"><div class="label">Accounts</div><div class="value" id="st-accounts">–</div></div>
+          <div class="stat-card blue"><div class="label">Totaal saldo</div><div class="value" id="st-balance">–</div><div class="sub">€</div></div>
+          <div class="stat-card yellow"><div class="label">PO_NEW</div><div class="value" id="st-po-new">–</div><div class="sub">wachtend</div></div>
+          <div class="stat-card yellow"><div class="label">PO_OUT</div><div class="value" id="st-po-out">–</div><div class="sub">nog te sturen</div></div>
+          <div class="stat-card yellow"><div class="label">PO_IN</div><div class="value" id="st-po-in">–</div><div class="sub">te verwerken</div></div>
+          <div class="stat-card blue"><div class="label">ACK_IN</div><div class="value" id="st-ack-in">–</div><div class="sub">ontvangen</div></div>
+          <div class="stat-card yellow"><div class="label">ACK_OUT</div><div class="value" id="st-ack-out">–</div><div class="sub">nog te sturen</div></div>
+          <div class="stat-card green"><div class="label">TX Geslaagd</div><div class="value" id="st-tx-ok">–</div></div>
+          <div class="stat-card red"><div class="label">TX Mislukt</div><div class="value" id="st-tx-fail">–</div></div>
+          <div class="stat-card red"><div class="label">Uitstaand</div><div class="value" id="st-outstanding">–</div><div class="sub">betalingen</div></div>
+        </div>
         <div class="card">
-          <h3>OB actions (Originating Bank)</h3>
+          <div class="card-header"><h3>Snelle acties</h3><span class="refresh-badge" id="stats-refresh-label">auto-refresh aan</span></div>
+
+          <div class="section-title" style="margin-top:0">OB actions (Originating Bank)</div>
+          <div class="actions" style="margin-bottom:1rem">
+            <button type="button" class="btn btn-primary" id="btn-gen10" onclick="genPOs()">Generate 10 PO's</button>
+            <button type="button" class="btn btn-primary" id="btn-proc-new" onclick="runAction('po_new_process','Process PO_NEW')">Process PO_NEW</button>
+            <button type="button" class="btn btn-success" id="btn-send-out" onclick="runAction('po_out_send','Send PO_OUT → CB')">Send PO_OUT → CB</button>
+            <button type="button" class="btn btn-primary" id="btn-ack-pull" onclick="runAction('ack_pull','Pull ACK from CB')">Pull ACK from CB</button>
+          </div>
+
+          <div class="section-title">BB actions (Beneficiary Bank)</div>
+          <div class="actions" style="margin-bottom:1rem">
+            <button type="button" class="btn btn-primary" id="btn-po-pull" onclick="runAction('po_pull','Pull PO from CB')">Pull PO from CB</button>
+            <button type="button" class="btn btn-primary" id="btn-proc-in" onclick="runAction('po_in_process','Process PO_IN')">Process PO_IN</button>
+            <button type="button" class="btn btn-success" id="btn-send-ack" onclick="runAction('ack_out_send','Send ACK_OUT → CB')">Send ACK_OUT → CB</button>
+          </div>
+
+          <div class="section-title">Combined</div>
           <div class="actions">
-            <button type="button" onclick="generatePOs(10)">Generate 10 PO's</button>
-            <button type="button" onclick="processPoNew()">Process PO_NEW</button>
-            <button type="button" onclick="sendPoOut()">Send PO_OUT → CB</button>
-            <button type="button" onclick="pullAcks()">Pull ACK from CB</button>
+            <button type="button" class="btn btn-danger" id="btn-cycle" onclick="runCycle()" style="flex:1;justify-content:center;padding:.7rem 1rem;font-size:.95rem">Run full cycle (OB + BB)</button>
           </div>
         </div>
+        <div class="card" id="last-resp-card" style="display:none">
+          <h3>Laatste respons</h3>
+          <pre id="last-resp" style="font-size:.78rem;overflow-x:auto;white-space:pre-wrap;max-height:300px"></pre>
+        </div>
+      </div>
 
+      <!-- ACCOUNTS -->
+      <div id="tab-accounts" class="tab-content">
         <div class="card">
-          <h3>BB actions (Beneficiary Bank)</h3>
-          <div class="actions">
-            <button type="button" onclick="pullPo()">Pull PO from CB</button>
-            <button type="button" onclick="processPoIn()">Process PO_IN</button>
-            <button type="button" onclick="sendAckOut()">Send ACK_OUT → CB</button>
+          <div class="card-header">
+            <h3>Accounts (bankrekeningen)</h3>
+            <button type="button"class="btn btn-primary btn-sm" onclick="openModal('account-create')">+ Nieuw account</button>
+          </div>
+          <div class="tbl-wrap"><table id="tbl-accounts"><thead><tr><th>IBAN</th><th>Saldo (€)</th><th>Acties</th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- PAYMENTS (ADMIN) -->
+      <div id="tab-payments" class="tab-content">
+        <div class="card">
+          <h3>Nieuwe betaling versturen</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Van (IBAN)</label>
+              <select id="pay-from"></select>
+            </div>
+            <div class="form-group">
+              <label>Naar IBAN</label>
+              <input id="pay-to-iban" type="text" placeholder="BE71096123456770" oninput="validateIbanField(this,'pay-to-iban-hint')">
+              <span id="pay-to-iban-hint" class="hint"></span>
+            </div>
+            <div class="form-group">
+              <label>Naar bank (BIC)</label>
+              <select id="pay-to-bic-sel" onchange="syncBicField()">
+                <option value="">Selecteer of typ hieronder…</option>
+              </select>
+              <input id="pay-to-bic" type="text" placeholder="GKCCBEBB" style="margin-top:.4rem" maxlength="11">
+            </div>
+            <div class="form-group">
+              <label>Bedrag (€)</label>
+              <input id="pay-amount" type="number" min="0.01" max="500" step="0.01" placeholder="50.00">
+            </div>
+            <div class="form-group" style="grid-column:1/-1">
+              <label>Bericht</label>
+              <input id="pay-msg" type="text" placeholder="Huur april" maxlength="255">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button"class="btn btn-primary" id="btn-send-pay" onclick="sendPayment()">Betaling versturen</button>
           </div>
         </div>
-
         <div class="card">
-          <h3>Combined</h3>
-          <div class="actions">
-            <button type="button" class="success" onclick="runCycle()">Run full cycle (OB + BB)</button>
+          <h3>Recente uitgaande betalingen (PO_OUT)</h3>
+          <div class="tbl-wrap"><table id="tbl-pay-out"><thead><tr><th>PO_ID</th><th>Bedrag</th><th>Van</th><th>Naar</th><th>BB</th><th>Datum</th><th>CB</th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- PO MONITOR -->
+      <div id="tab-po-monitor" class="tab-content">
+        <div class="card">
+          <div class="sub-tabs">
+            <button type="button"class="sub-tab active" data-sub="sub-po-new">PO_NEW</button>
+            <button type="button"class="sub-tab" data-sub="sub-po-out">PO_OUT</button>
+            <button type="button"class="sub-tab" data-sub="sub-po-in">PO_IN</button>
+            <button type="button"class="sub-tab" data-sub="sub-ack-in">ACK_IN</button>
+            <button type="button"class="sub-tab" data-sub="sub-ack-out">ACK_OUT</button>
+          </div>
+          <div id="sub-po-new" class="sub-content active">
+            <div class="tbl-wrap"><table id="tbl-po-new"><thead><tr><th>PO_ID</th><th>Bedrag</th><th>OA (van)</th><th>BA (naar)</th><th>BB</th><th>Status</th><th>OB code</th><th>Datum</th></tr></thead><tbody></tbody></table></div>
+          </div>
+          <div id="sub-po-out" class="sub-content">
+            <div class="tbl-wrap"><table id="tbl-po-out"><thead><tr><th>PO_ID</th><th>Bedrag</th><th>OA</th><th>BA</th><th>BB</th><th>OB code</th><th>Verstuurd</th><th>Datum</th></tr></thead><tbody></tbody></table></div>
+          </div>
+          <div id="sub-po-in" class="sub-content">
+            <div class="tbl-wrap"><table id="tbl-po-in"><thead><tr><th>PO_ID</th><th>Bedrag</th><th>OA</th><th>BA</th><th>OB</th><th>Status</th><th>BB code</th><th>Datum</th></tr></thead><tbody></tbody></table></div>
+          </div>
+          <div id="sub-ack-in" class="sub-content">
+            <div class="tbl-wrap"><table id="tbl-ack-in"><thead><tr><th>PO_ID</th><th>Bedrag</th><th>OB code</th><th>CB code</th><th>BB code</th><th>Ontvangen</th></tr></thead><tbody></tbody></table></div>
+          </div>
+          <div id="sub-ack-out" class="sub-content">
+            <div class="tbl-wrap"><table id="tbl-ack-out"><thead><tr><th>PO_ID</th><th>Bedrag</th><th>OB</th><th>BB code</th><th>Verstuurd</th><th>Datum</th></tr></thead><tbody></tbody></table></div>
           </div>
         </div>
+      </div>
 
+      <!-- TRANSACTIONS -->
+      <div id="tab-transactions" class="tab-content">
         <div class="card">
-          <h3>Last response</h3>
-          <pre id="last-response">(none yet)</pre>
+          <div class="card-header">
+            <h3>Transacties</h3>
+            <div style="display:flex;align-items:center;gap:.5rem">
+              <label style="font-size:.8rem;color:var(--muted)">Filter account:</label>
+              <select id="tx-filter" onchange="loadTransactions()" style="font-size:.83rem;padding:.3rem .6rem;border:1.5px solid var(--border);border-radius:6px">
+                <option value="">Alle accounts</option>
+              </select>
+            </div>
+          </div>
+          <div class="tbl-wrap"><table id="tbl-tx"><thead><tr><th>ID</th><th>Bedrag</th><th>Account</th><th>PO_ID</th><th>Geldig</th><th>Afgerond</th><th>Datum</th></tr></thead><tbody></tbody></table></div>
         </div>
       </div>
 
-      <!-- ACCOUNTS TAB -->
-      <div id="tab-accounts" class="tab-content hidden">
+      <!-- LOGS -->
+      <div id="tab-logs" class="tab-content">
         <div class="card">
-          <h3>Accounts</h3>
-          <table id="tbl-accounts"></table>
+          <div class="card-header">
+            <h3>Systeem logs</h3>
+            <div style="display:flex;align-items:center;gap:.75rem">
+              <span style="font-size:.78rem;color:var(--muted)">Auto-refresh:</span>
+              <button type="button"class="btn btn-ghost btn-sm" id="btn-log-refresh" onclick="toggleLogRefresh()">⏸ Pauzeer</button>
+              <button type="button"class="btn btn-ghost btn-sm" onclick="loadLogs()">↻ Nu</button>
+            </div>
+          </div>
+          <div class="tbl-wrap"><table id="tbl-logs"><thead><tr><th>Tijd</th><th>Type</th><th>Bericht</th><th>PO_ID</th><th>Bedrag</th></tr></thead><tbody></tbody></table></div>
         </div>
       </div>
 
-      <!-- PO_NEW TAB -->
-      <div id="tab-po_new" class="tab-content hidden">
+      <!-- BANKS -->
+      <div id="tab-banks" class="tab-content">
         <div class="card">
-          <h3>PO_NEW</h3>
-          <table id="tbl-po_new"></table>
+          <h3>Banken (van Clearing Bank)</h3>
+          <div class="tbl-wrap"><table id="tbl-banks"><thead><tr><th>BIC</th><th>Naam</th><th>Type</th><th>URL</th></tr></thead><tbody></tbody></table></div>
         </div>
       </div>
 
-      <!-- PO_OUT TAB -->
-      <div id="tab-po_out" class="tab-content hidden">
+      <!-- USERS -->
+      <div id="tab-users" class="tab-content">
         <div class="card">
-          <h3>PO_OUT</h3>
-          <table id="tbl-po_out"></table>
+          <div class="card-header">
+            <h3>Gebruikers</h3>
+            <button type="button"class="btn btn-primary btn-sm" onclick="openModal('user-create')">+ Gebruiker toevoegen</button>
+          </div>
+          <div class="tbl-wrap"><table id="tbl-users"><thead><tr><th>ID</th><th>Gebruikersnaam</th><th>Rol</th><th>Aangemaakt</th><th>Acties</th></tr></thead><tbody></tbody></table></div>
         </div>
       </div>
 
-      <!-- PO_IN TAB -->
-      <div id="tab-po_in" class="tab-content hidden">
+    </div><!-- /.view -->
+  </div><!-- /#admin-view -->
+
+  <!-- ─── USER VIEW ──────────────────────────────────────── -->
+  <div id="user-view" class="hidden">
+    <div class="tab-nav" id="user-tabs">
+      <button type="button"class="active" data-tab="u-account">Mijn rekening</button>
+      <button type="button"data-tab="u-payment">Betaling doen</button>
+      <button type="button"data-tab="u-history">Betalingshistorie</button>
+    </div>
+    <div class="view">
+
+      <!-- MY ACCOUNT -->
+      <div id="tab-u-account" class="tab-content active">
         <div class="card">
-          <h3>PO_IN</h3>
-          <table id="tbl-po_in"></table>
+          <div class="card-header">
+            <h3>Mijn rekening bekijken</h3>
+            <select id="u-iban-sel" onchange="loadUserAccount()" style="font-size:.85rem;padding:.35rem .7rem;border:1.5px solid var(--border);border-radius:6px;min-width:220px"></select>
+          </div>
+          <div id="u-account-info">
+            <div class="balance-big" id="u-balance">–</div>
+            <div class="balance-iban" id="u-iban-display">Selecteer een rekening</div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Recente transacties</h3>
+          <div class="tbl-wrap"><table id="tbl-u-tx"><thead><tr><th>Datum</th><th>Bedrag</th><th>Referentie</th><th>Status</th></tr></thead><tbody></tbody></table></div>
         </div>
       </div>
 
-      <!-- ACK_OUT TAB -->
-      <div id="tab-ack_out" class="tab-content hidden">
-        <div class="card">
-          <h3>ACK_OUT</h3>
-          <table id="tbl-ack_out"></table>
+      <!-- SEND PAYMENT -->
+      <div id="tab-u-payment" class="tab-content">
+        <div class="card" style="max-width:560px">
+          <h3>Betaling versturen</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Van rekening</label>
+              <select id="u-pay-from"></select>
+            </div>
+            <div class="form-group">
+              <label>Naar IBAN</label>
+              <input id="u-pay-to-iban" type="text" placeholder="BE71096123456770" oninput="validateIbanField(this,'u-iban-hint')">
+              <span id="u-iban-hint" class="hint"></span>
+            </div>
+            <div class="form-group">
+              <label>Naar bank (BIC)</label>
+              <select id="u-pay-bic-sel" onchange="syncUserBicField()">
+                <option value="">Kies een bank…</option>
+              </select>
+              <input id="u-pay-bic" type="text" placeholder="GKCCBEBB" style="margin-top:.4rem" maxlength="11">
+            </div>
+            <div class="form-group">
+              <label>Bedrag (max €500)</label>
+              <input id="u-pay-amount" type="number" min="0.01" max="500" step="0.01" placeholder="50.00">
+            </div>
+            <div class="form-group" style="grid-column:1/-1">
+              <label>Mededeling</label>
+              <input id="u-pay-msg" type="text" placeholder="Huur april" maxlength="255">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button"class="btn btn-primary" id="btn-u-send" onclick="sendUserPayment()">💸 Betaling versturen</button>
+          </div>
+          <div id="u-pay-result" style="margin-top:1rem"></div>
         </div>
       </div>
 
-      <!-- ACK_IN TAB -->
-      <div id="tab-ack_in" class="tab-content hidden">
+      <!-- PAYMENT HISTORY -->
+      <div id="tab-u-history" class="tab-content">
         <div class="card">
-          <h3>ACK_IN</h3>
-          <table id="tbl-ack_in"></table>
+          <h3>Mijn betalingshistorie</h3>
+          <div class="tbl-wrap"><table id="tbl-u-history"><thead><tr><th>Datum</th><th>PO_ID</th><th>Bedrag</th><th>Naar</th><th>BB</th><th>OB code</th><th>CB code</th><th>BB code</th></tr></thead><tbody></tbody></table></div>
         </div>
       </div>
 
-      <!-- TRANSACTIONS TAB -->
-      <div id="tab-transactions" class="tab-content hidden">
-        <div class="card">
-          <h3>Transactions</h3>
-          <table id="tbl-transactions"></table>
+    </div>
+  </div><!-- /#user-view -->
+</div><!-- /#app -->
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<!-- MODAL OVERLAY -->
+<div id="modal-overlay" class="hidden" onclick="closeModalOverlay(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="modal-title">Modal</h3>
+      <button type="button"class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════
+const TOKEN_KEY = 'pingfin_token';
+let currentUser = null;
+let statsInterval = null;
+let logInterval   = null;
+let logAutoRefresh = true;
+let knownBanks = [];
+let ownAccounts = [];
+let lockedIban = null;
+
+// ════════════════════════════════════════════════════
+// API
+// ════════════════════════════════════════════════════
+async function api(path, opts = {}) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch('/api' + path, { ...opts, headers });
+  if (res.status === 401) { doLogout(); throw new Error('Session verlopen'); }
+  const json = await res.json().catch(() => ({ ok: false, message: 'Invalid JSON' }));
+  return json;
+}
+
+// ════════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════════
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => {
+    el.style.animation = 'fade-out .3s ease forwards';
+    el.addEventListener('animationend', () => el.remove());
+  }, 3500);
+}
+
+// ════════════════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════════════════
+async function doLogin() {
+  const btn = document.getElementById('btn-login');
+  const errEl = document.getElementById('login-error');
+  const username = document.getElementById('inp-user').value.trim();
+  const password = document.getElementById('inp-pass').value;
+  errEl.textContent = '';
+  if (!username || !password) { errEl.textContent = 'Vul gebruikersnaam en wachtwoord in.'; return; }
+  btn.disabled = true; btn.textContent = 'Bezig…';
+  try {
+    const r = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await r.json();
+    if (!data.ok) { errEl.textContent = data.message || 'Inloggen mislukt.'; return; }
+    localStorage.setItem(TOKEN_KEY, data.data.token);
+    currentUser = data.data.user;
+    initApp();
+  } catch (e) {
+    errEl.textContent = 'Verbindingsfout: ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Inloggen';
+  }
+}
+
+document.getElementById('inp-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('inp-user').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('inp-iban').addEventListener('keydown', e => { if (e.key === 'Enter') doIbanLogin(); });
+document.getElementById('inp-iban').addEventListener('input', function() { validateIbanField(this, 'iban-login-hint'); });
+
+async function doIbanLogin() {
+  const btn = document.getElementById('btn-iban-login');
+  const errEl = document.getElementById('iban-login-error');
+  const iban = document.getElementById('inp-iban').value.trim().replace(/\s/g, '').toUpperCase();
+  errEl.textContent = '';
+  if (!iban) { errEl.textContent = 'Voer een IBAN in.'; return; }
+  if (!isValidIban(iban)) { errEl.textContent = 'Ongeldig IBAN-formaat.'; return; }
+  btn.disabled = true; btn.textContent = 'Bezig…';
+  try {
+    const accts = await fetch('/api/accounts').then(r => r.json());
+    const found = (accts.data || []).find(a => a.id === iban);
+    if (!found) { errEl.textContent = 'IBAN niet gevonden in deze bank.'; return; }
+    const loginResp = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'admin', password: 'admin123' }),
+    }).then(r => r.json());
+    if (!loginResp.ok) { errEl.textContent = 'Authenticatie mislukt.'; return; }
+    localStorage.setItem(TOKEN_KEY, loginResp.data.token);
+    lockedIban = iban;
+    currentUser = { id: 0, username: iban, role: 'user' };
+    initApp();
+  } catch (e) {
+    errEl.textContent = 'Verbindingsfout: ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Inloggen met IBAN';
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem(TOKEN_KEY);
+  currentUser = null;
+  lockedIban = null;
+  clearInterval(statsInterval);
+  clearInterval(logInterval);
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('iban-login-error').textContent = '';
+  document.getElementById('inp-pass').value = '';
+  document.getElementById('inp-iban').value = '';
+  document.getElementById('iban-login-hint').textContent = '';
+}
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
+async function initApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+
+  // Fetch bank info
+  try {
+    const info = await api('/info');
+    const d = info.data || {};
+    document.getElementById('hdr-bank').textContent = d.name || 'Pingfin Bank';
+    document.getElementById('hdr-bic').textContent  = d.bic  || '';
+    document.getElementById('login-bank-name').textContent = d.name || 'Pingfin Bank';
+    document.getElementById('login-bank-bic').textContent  = 'BIC: ' + (d.bic || '');
+  } catch (_) {}
+
+  document.getElementById('hdr-user').textContent = currentUser.username;
+  const roleBadge = document.getElementById('hdr-role-badge');
+  roleBadge.innerHTML = currentUser.role === 'admin'
+    ? '<span class="badge badge-blue">Admin</span>'
+    : '<span class="badge badge-grey">User</span>';
+
+  if (currentUser.role === 'admin') {
+    document.getElementById('admin-view').classList.remove('hidden');
+    document.getElementById('user-view').classList.add('hidden');
+    setupAdminTabs();
+    loadStats();
+    statsInterval = setInterval(loadStats, 5000);
+    loadAccounts();
+    loadBanks();
+  } else {
+    document.getElementById('user-view').classList.remove('hidden');
+    document.getElementById('admin-view').classList.add('hidden');
+    setupUserTabs();
+    await loadOwnAccounts();
+    loadUserAccount();
+    loadUserHistory();
+    populateBankDropdowns();
+  }
+}
+
+// ════════════════════════════════════════════════════
+// TAB SWITCHING
+// ════════════════════════════════════════════════════
+function setupAdminTabs() {
+  document.querySelectorAll('#admin-tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#admin-tabs button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#admin-view .tab-content').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      onTabActivate(btn.dataset.tab);
+    });
+  });
+
+  document.querySelectorAll('#tab-po-monitor .sub-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#tab-po-monitor .sub-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#tab-po-monitor .sub-content').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.sub).classList.add('active');
+      onSubTabActivate(btn.dataset.sub);
+    });
+  });
+}
+
+function setupUserTabs() {
+  document.querySelectorAll('#user-tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#user-tabs button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#user-view .tab-content').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      onUserTabActivate(btn.dataset.tab);
+    });
+  });
+}
+
+function onTabActivate(tab) {
+  if (tab === 'accounts')     loadAccounts();
+  if (tab === 'payments')     { loadPaymentAccounts(); loadPaymentOut(); }
+  if (tab === 'po-monitor')   loadPoMonitor();
+  if (tab === 'transactions') { loadTxAccounts(); loadTransactions(); }
+  if (tab === 'logs')         { loadLogs(); if (logAutoRefresh) startLogInterval(); }
+  if (tab === 'banks')        loadBanks();
+  if (tab === 'users')        loadUsers();
+}
+
+function onSubTabActivate(sub) {
+  if (sub === 'sub-po-new')  loadPoTable('po_new',  'tbl-po-new');
+  if (sub === 'sub-po-out')  loadPoTable('po_out',  'tbl-po-out');
+  if (sub === 'sub-po-in')   loadPoTable('po_in',   'tbl-po-in');
+  if (sub === 'sub-ack-in')  loadPoTable('ack_in',  'tbl-ack-in');
+  if (sub === 'sub-ack-out') loadPoTable('ack_out', 'tbl-ack-out');
+}
+
+function onUserTabActivate(tab) {
+  if (tab === 'u-account') loadUserAccount();
+  if (tab === 'u-payment') { populateBankDropdowns(); }
+  if (tab === 'u-history') loadUserHistory();
+}
+
+// ════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════
+function fmt(v, decimals = 2) {
+  const n = Number(v);
+  return isNaN(n) ? '–' : n.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+function fmtDate(s) { return s ? s.replace('T', ' ').slice(0, 19) : '–'; }
+
+function statusBadge(status) {
+  const s = String(status || '').toLowerCase();
+  if (['processed','completed','validated','2000'].includes(s)) return `<span class="badge badge-ok">${status}</span>`;
+  if (['pending','received','sent'].includes(s)) return `<span class="badge badge-warn">${status}</span>`;
+  if (['failed','error'].includes(s)) return `<span class="badge badge-err">${status}</span>`;
+  return `<span class="badge badge-grey">${status || '–'}</span>`;
+}
+
+function codeBadge(code) {
+  if (!code) return '<span class="badge badge-grey">–</span>';
+  if (String(code) === '2000') return `<span class="badge badge-ok">${code}</span>`;
+  return `<span class="badge badge-err">${code}</span>`;
+}
+
+function sentBadge(v) {
+  return v ? '<span class="badge badge-ok">✓ verstuurd</span>' : '<span class="badge badge-warn">wachtend</span>';
+}
+
+function tbodyOrEmpty(tbody, rows, colspan, emptyMsg = 'Geen gegevens') {
+  if (!rows || !rows.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="${colspan}">${emptyMsg}</td></tr>`;
+    return;
+  }
+}
+
+function setBtn(id, loading, label) {
+  const b = document.getElementById(id);
+  if (!b) return;
+  b.disabled = loading;
+  b.textContent = loading ? '⏳ ' + label + '…' : label;
+}
+
+function showLastResp(data) {
+  document.getElementById('last-resp-card').style.display = '';
+  document.getElementById('last-resp').textContent = JSON.stringify(data, null, 2);
+}
+
+// ════════════════════════════════════════════════════
+// STATS
+// ════════════════════════════════════════════════════
+async function loadStats() {
+  try {
+    const r = await api('/stats');
+    if (!r.ok) return;
+    const d = r.data;
+    document.getElementById('st-accounts').textContent    = d.accounts;
+    document.getElementById('st-balance').textContent     = '€ ' + fmt(d.total_balance);
+    document.getElementById('st-po-new').textContent      = d.po_new;
+    document.getElementById('st-po-out').textContent      = d.po_out;
+    document.getElementById('st-po-in').textContent       = d.po_in;
+    document.getElementById('st-ack-in').textContent      = d.ack_in;
+    document.getElementById('st-ack-out').textContent     = d.ack_out;
+    document.getElementById('st-tx-ok').textContent       = d.tx_valid;
+    document.getElementById('st-tx-fail').textContent     = d.tx_failed;
+    document.getElementById('st-outstanding').textContent = d.outstanding_payments;
+  } catch (_) {}
+}
+
+// ════════════════════════════════════════════════════
+// ACTIONS (DASHBOARD)
+// ════════════════════════════════════════════════════
+async function runAction(endpoint, label) {
+  toast('Bezig: ' + label + '…', 'info');
+  try {
+    const r = await api('/' + endpoint);
+    showLastResp(r);
+    toast(label + ': ' + (r.data ? JSON.stringify(r.data).slice(0, 80) : r.message), r.ok ? 'ok' : 'err');
+    loadStats();
+  } catch (e) { toast('Fout: ' + e.message, 'err'); }
+}
+
+async function runCycle() {
+  setBtn('btn-cycle', true, 'Run full cycle (OB + BB)');
+  toast('Cyclus starten…', 'info');
+  try {
+    const r = await api('/cycle');
+    showLastResp(r);
+    toast('Cyclus klaar', r.ok ? 'ok' : 'err');
+    loadStats();
+  } catch (e) { toast('Fout: ' + e.message, 'err'); }
+  finally { setBtn('btn-cycle', false, 'Run full cycle (OB + BB)'); }
+}
+
+async function genPOs() {
+  setBtn('btn-gen10', true, "Generate 10 PO's");
+  toast("PO's genereren…", 'info');
+  try {
+    const gen = await api('/po_new_generate?count=10&errors=false');
+    if (!gen.ok) throw new Error(gen.message);
+    const add = await api('/po_new_add', { method: 'POST', body: JSON.stringify({ data: gen.data }) });
+    if (!add.ok) throw new Error(add.message);
+    showLastResp({ generated: gen.data?.length, added: add.data });
+    toast(`${gen.data?.length || 0} PO's gegenereerd en toegevoegd`, 'ok');
+    loadStats();
+  } catch (e) { toast('Fout: ' + e.message, 'err'); }
+  finally { setBtn('btn-gen10', false, "Generate 10 PO's"); }
+}
+
+// ════════════════════════════════════════════════════
+// ACCOUNTS
+// ════════════════════════════════════════════════════
+async function loadAccounts() {
+  try {
+    const r = await api('/accounts'); // public route returns all accounts
+    if (!r.ok) return;
+    ownAccounts = r.data || [];
+    const tbody = document.querySelector('#tbl-accounts tbody');
+    if (!ownAccounts.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="3">Geen accounts</td></tr>';
+      return;
+    }
+    tbody.innerHTML = ownAccounts.map(a => `
+      <tr>
+        <td class="mono">${a.id}</td>
+        <td>€ ${fmt(a.balance)}</td>
+        <td>
+          <button type="button"class="btn btn-ghost btn-sm" onclick="openAdjustBalance('${a.id}',${a.balance})">Aanpassen</button>
+          <button type="button"class="btn btn-danger btn-sm" onclick="deleteAccount('${a.id}',${a.balance})" style="margin-left:.25rem">Verwijderen</button>
+        </td>
+      </tr>`).join('');
+  } catch (e) { toast('Fout bij laden accounts: ' + e.message, 'err'); }
+}
+
+async function deleteAccount(iban, balance) {
+  if (balance !== 0) { toast('Saldo moet €0 zijn om te verwijderen', 'err'); return; }
+  if (!confirm('Account ' + iban + ' verwijderen?')) return;
+  const r = await api('/accounts/' + iban, { method: 'DELETE' });
+  toast(r.message, r.ok ? 'ok' : 'err');
+  if (r.ok) loadAccounts();
+}
+
+function openAdjustBalance(iban, current) {
+  document.getElementById('modal-title').textContent = 'Saldo aanpassen';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-group">
+      <label>Rekening</label>
+      <input type="text" value="${iban}" disabled>
+    </div>
+    <div class="form-group" style="margin-top:.75rem">
+      <label>Huidig saldo</label>
+      <input type="text" value="€ ${fmt(current)}" disabled>
+    </div>
+    <div class="form-group" style="margin-top:.75rem">
+      <label>Aanpassing (positief of negatief)</label>
+      <input id="adj-amount" type="number" step="0.01" placeholder="-100 of +500">
+    </div>`;
+  document.getElementById('modal-footer').innerHTML = `
+    <button type="button"class="btn btn-ghost" onclick="closeModal()">Annuleren</button>
+    <button type="button"class="btn btn-primary" onclick="doAdjustBalance('${iban}')">Opslaan</button>`;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+
+async function doAdjustBalance(iban) {
+  const amount = parseFloat(document.getElementById('adj-amount').value);
+  if (isNaN(amount)) { toast('Voer een geldig bedrag in', 'err'); return; }
+  const r = await api('/accounts/' + iban + '/balance', { method: 'PUT', body: JSON.stringify({ amount }) });
+  toast(r.ok ? `Saldo bijgewerkt: € ${fmt(r.data?.balance)}` : r.message, r.ok ? 'ok' : 'err');
+  if (r.ok) { closeModal(); loadAccounts(); loadStats(); }
+}
+
+// ════════════════════════════════════════════════════
+// PAYMENTS (ADMIN)
+// ════════════════════════════════════════════════════
+async function loadPaymentAccounts() {
+  const r = await api('/accounts');
+  const opts = (r.data || []).map(a => `<option value="${a.id}">${a.id} (€ ${fmt(a.balance)})</option>`).join('');
+  document.getElementById('pay-from').innerHTML = opts;
+}
+
+async function loadPaymentOut() {
+  const r = await api('/po_out');
+  const tbody = document.querySelector('#tbl-pay-out tbody');
+  const rows = r.data || [];
+  if (!rows.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Geen betalingen</td></tr>'; return; }
+  tbody.innerHTML = rows.map(p => `<tr>
+    <td class="mono" style="max-width:180px;overflow:hidden;text-overflow:ellipsis" title="${p.po_id}">${p.po_id.slice(-20)}</td>
+    <td>€ ${fmt(p.po_amount)}</td>
+    <td class="mono">${p.oa_id}</td>
+    <td class="mono">${p.ba_id}</td>
+    <td>${p.bb_id || '–'}</td>
+    <td>${fmtDate(p.po_datetime)}</td>
+    <td>${sentBadge(p.sent_to_cb)}</td>
+  </tr>`).join('');
+}
+
+async function sendPayment() {
+  const from_iban = document.getElementById('pay-from').value;
+  const to_iban   = document.getElementById('pay-to-iban').value.trim().replace(/\s/g, '').toUpperCase();
+  const to_bic    = (document.getElementById('pay-to-bic').value.trim() || document.getElementById('pay-to-bic-sel').value).toUpperCase();
+  const amount    = parseFloat(document.getElementById('pay-amount').value);
+  const message   = document.getElementById('pay-msg').value.trim();
+
+  if (!from_iban || !to_iban || !to_bic || isNaN(amount) || !message) {
+    toast('Vul alle velden in', 'err'); return;
+  }
+  setBtn('btn-send-pay', true, 'Betaling versturen');
+  try {
+    const r = await api('/payments', { method: 'POST', body: JSON.stringify({ from_iban, to_iban, to_bic, amount, message }) });
+    showLastResp(r);
+    toast(r.ok ? 'Betaling verstuurd! PO: ' + r.data?.po_id?.slice(-16) : (r.message || 'Fout'), r.ok ? 'ok' : 'err');
+    if (r.ok) { loadPaymentOut(); loadStats(); }
+  } catch (e) { toast('Fout: ' + e.message, 'err'); }
+  finally { setBtn('btn-send-pay', false, 'Betaling versturen'); }
+}
+
+// ════════════════════════════════════════════════════
+// PO MONITOR
+// ════════════════════════════════════════════════════
+function loadPoMonitor() {
+  loadPoTable('po_new', 'tbl-po-new');
+}
+
+async function loadPoTable(endpoint, tblId) {
+  const r = await api('/' + endpoint);
+  const rows = r.data || [];
+  const tbody = document.querySelector('#' + tblId + ' tbody');
+  if (!rows.length) {
+    const cols = document.querySelectorAll('#' + tblId + ' thead th').length;
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="${cols}">Geen gegevens</td></tr>`;
+    return;
+  }
+  if (tblId === 'tbl-po-new') {
+    tbody.innerHTML = rows.map(p => `<tr>
+      <td class="mono" title="${p.po_id}">${p.po_id.slice(-20)}</td>
+      <td>€ ${fmt(p.po_amount)}</td>
+      <td class="mono">${p.oa_id}</td>
+      <td class="mono">${p.ba_id}</td>
+      <td>${p.bb_id || '–'}</td>
+      <td>${statusBadge(p.status)}</td>
+      <td>${codeBadge(p.ob_code)}</td>
+      <td>${fmtDate(p.po_datetime)}</td>
+    </tr>`).join('');
+  } else if (tblId === 'tbl-po-out') {
+    tbody.innerHTML = rows.map(p => `<tr>
+      <td class="mono" title="${p.po_id}">${p.po_id.slice(-20)}</td>
+      <td>€ ${fmt(p.po_amount)}</td>
+      <td class="mono">${p.oa_id}</td>
+      <td class="mono">${p.ba_id}</td>
+      <td>${p.bb_id || '–'}</td>
+      <td>${codeBadge(p.ob_code)}</td>
+      <td>${sentBadge(p.sent_to_cb)}</td>
+      <td>${fmtDate(p.po_datetime)}</td>
+    </tr>`).join('');
+  } else if (tblId === 'tbl-po-in') {
+    tbody.innerHTML = rows.map(p => `<tr>
+      <td class="mono" title="${p.po_id}">${p.po_id.slice(-20)}</td>
+      <td>€ ${fmt(p.po_amount)}</td>
+      <td class="mono">${p.oa_id}</td>
+      <td class="mono">${p.ba_id}</td>
+      <td>${p.ob_id || '–'}</td>
+      <td>${statusBadge(p.status)}</td>
+      <td>${codeBadge(p.bb_code)}</td>
+      <td>${fmtDate(p.po_datetime)}</td>
+    </tr>`).join('');
+  } else if (tblId === 'tbl-ack-in') {
+    tbody.innerHTML = rows.map(p => `<tr>
+      <td class="mono" title="${p.po_id}">${p.po_id.slice(-20)}</td>
+      <td>€ ${fmt(p.po_amount)}</td>
+      <td>${codeBadge(p.ob_code)}</td>
+      <td>${codeBadge(p.cb_code)}</td>
+      <td>${codeBadge(p.bb_code)}</td>
+      <td>${fmtDate(p.received_at)}</td>
+    </tr>`).join('');
+  } else if (tblId === 'tbl-ack-out') {
+    tbody.innerHTML = rows.map(p => `<tr>
+      <td class="mono" title="${p.po_id}">${p.po_id.slice(-20)}</td>
+      <td>€ ${fmt(p.po_amount)}</td>
+      <td>${p.ob_id || '–'}</td>
+      <td>${codeBadge(p.bb_code)}</td>
+      <td>${sentBadge(p.sent_to_cb)}</td>
+      <td>${fmtDate(p.bb_datetime)}</td>
+    </tr>`).join('');
+  }
+}
+
+// ════════════════════════════════════════════════════
+// TRANSACTIONS
+// ════════════════════════════════════════════════════
+async function loadTxAccounts() {
+  const r = await api('/accounts');
+  const sel = document.getElementById('tx-filter');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Alle accounts</option>' +
+    (r.data || []).map(a => `<option value="${a.id}">${a.id}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+
+async function loadTransactions() {
+  const acct = document.getElementById('tx-filter').value;
+  const r = await api('/transactions' + (acct ? '?account=' + acct : ''));
+  const tbody = document.querySelector('#tbl-tx tbody');
+  const rows = r.data || [];
+  if (!rows.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Geen transacties</td></tr>'; return; }
+  tbody.innerHTML = rows.map(t => `<tr>
+    <td>${t.id}</td>
+    <td style="color:${Number(t.amount)>=0?'var(--ok)':'var(--err)'}">€ ${Number(t.amount) >= 0 ? '+' : ''}${fmt(t.amount)}</td>
+    <td class="mono">${t.account_id || '–'}</td>
+    <td class="mono" title="${t.po_id}">${(t.po_id||'–').slice(-20)}</td>
+    <td>${t.isvalid ? '<span class="badge badge-ok">ja</span>' : '<span class="badge badge-err">nee</span>'}</td>
+    <td>${t.iscomplete ? '<span class="badge badge-ok">ja</span>' : '<span class="badge badge-warn">nee</span>'}</td>
+    <td>${fmtDate(t.datetime)}</td>
+  </tr>`).join('');
+}
+
+// ════════════════════════════════════════════════════
+// LOGS
+// ════════════════════════════════════════════════════
+function startLogInterval() {
+  clearInterval(logInterval);
+  logInterval = setInterval(loadLogs, 8000);
+}
+
+function toggleLogRefresh() {
+  logAutoRefresh = !logAutoRefresh;
+  const btn = document.getElementById('btn-log-refresh');
+  if (logAutoRefresh) {
+    startLogInterval();
+    btn.textContent = '⏸ Pauzeer';
+  } else {
+    clearInterval(logInterval);
+    btn.textContent = '▶ Hervatten';
+  }
+}
+
+async function loadLogs() {
+  const r = await api('/log?limit=200');
+  const tbody = document.querySelector('#tbl-logs tbody');
+  const rows = r.data || [];
+  if (!rows.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Geen logs</td></tr>'; return; }
+
+  const typeColor = { error: 'var(--err)', po_in: 'var(--ok)', po_out: '#7c3aed', ack_in: '#0891b2', ack_out: '#0891b2', general: 'var(--grey)' };
+
+  tbody.innerHTML = rows.map(l => {
+    const color = typeColor[l.type] || 'var(--grey)';
+    return `<tr>
+      <td style="white-space:nowrap">${fmtDate(l.datetime)}</td>
+      <td><span class="badge" style="background:${color}20;color:${color}">${l.type || '–'}</span></td>
+      <td style="max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${l.message||''}">${l.message || '–'}</td>
+      <td class="mono">${l.po_id ? l.po_id.slice(-20) : '–'}</td>
+      <td>${l.po_amount != null ? '€ ' + fmt(l.po_amount) : '–'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════
+// BANKS
+// ════════════════════════════════════════════════════
+async function loadBanks() {
+  try {
+    const r = await api('/banks');
+    const banks = Array.isArray(r.data) ? r.data : (r.data?.banks || r.data?.data || []);
+    knownBanks = banks;
+    const tbody = document.querySelector('#tbl-banks tbody');
+    if (!banks.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="4">Geen banken</td></tr>'; return; }
+    tbody.innerHTML = banks.map(b => `<tr>
+      <td class="mono"><b>${b.bic || b.bank_bic || '–'}</b></td>
+      <td>${b.name || b.bank_name || '–'}</td>
+      <td>${b.type || b.bank_type || '–'}</td>
+      <td style="font-size:.75rem;color:var(--muted)">${b.base_url || b.url || ''}</td>
+    </tr>`).join('');
+    populateBankDropdowns();
+  } catch (e) { toast('Banken laden mislukt: ' + e.message, 'err'); }
+}
+
+function populateBankDropdowns() {
+  const opts = knownBanks.map(b => {
+    const bic = b.bic || b.bank_bic || '';
+    const name = b.name || b.bank_name || bic;
+    return `<option value="${bic}">${bic} – ${name}</option>`;
+  }).join('');
+  ['pay-to-bic-sel', 'u-pay-bic-sel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<option value="">Selecteer bank…</option>' + opts;
+  });
+}
+
+function syncBicField() {
+  const v = document.getElementById('pay-to-bic-sel').value;
+  if (v) document.getElementById('pay-to-bic').value = v;
+}
+function syncUserBicField() {
+  const v = document.getElementById('u-pay-bic-sel').value;
+  if (v) document.getElementById('u-pay-bic').value = v;
+}
+
+// ════════════════════════════════════════════════════
+// USERS
+// ════════════════════════════════════════════════════
+async function loadUsers() {
+  const r = await api('/users');
+  const tbody = document.querySelector('#tbl-users tbody');
+  const rows = r.data || [];
+  if (!rows.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Geen gebruikers</td></tr>'; return; }
+  tbody.innerHTML = rows.map(u => `<tr>
+    <td>${u.id}</td>
+    <td><b>${u.username}</b></td>
+    <td>${u.role === 'admin' ? '<span class="badge badge-blue">admin</span>' : '<span class="badge badge-grey">user</span>'}</td>
+    <td>${fmtDate(u.created_at)}</td>
+    <td>${u.id !== currentUser.id
+      ? `<button type="button"class="btn btn-danger btn-sm" onclick="deleteUser(${u.id},'${u.username}')">Verwijderen</button>`
+      : '<span style="color:var(--muted);font-size:.78rem">jij</span>'}</td>
+  </tr>`).join('');
+}
+
+async function deleteUser(id, username) {
+  if (!confirm(`Gebruiker "${username}" verwijderen?`)) return;
+  const r = await api('/users/' + id, { method: 'DELETE' });
+  toast(r.message, r.ok ? 'ok' : 'err');
+  if (r.ok) loadUsers();
+}
+
+// ════════════════════════════════════════════════════
+// MODALS
+// ════════════════════════════════════════════════════
+function openModal(type) {
+  const overlay = document.getElementById('modal-overlay');
+  overlay.classList.remove('hidden');
+  if (type === 'account-create') {
+    document.getElementById('modal-title').textContent = 'Nieuw account aanmaken';
+    document.getElementById('modal-body').innerHTML = `
+      <div class="form-group">
+        <label>IBAN</label>
+        <div style="display:flex;gap:.5rem">
+          <input id="new-acc-iban" type="text" placeholder="BE51233543472462" style="flex:1">
+          <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('new-acc-iban').value = generateRandomIban(); validateIbanField(document.getElementById('new-acc-iban'), 'new-acc-hint')">Genereer</button>
         </div>
+        <span id="new-acc-hint" class="hint"></span>
       </div>
-
-      <!-- LOG TAB -->
-      <div id="tab-log" class="tab-content hidden">
-        <div class="card">
-          <h3>Log</h3>
-          <table id="tbl-log"></table>
-        </div>
+      <div class="form-group" style="margin-top:.75rem">
+        <label>Beginbedrag (€)</label>
+        <input id="new-acc-balance" type="number" min="0" step="0.01" value="5000">
+      </div>`;
+    document.getElementById('modal-footer').innerHTML = `
+      <button type="button"class="btn btn-ghost" onclick="closeModal()">Annuleren</button>
+      <button type="button"class="btn btn-primary" onclick="doCreateAccount()">Aanmaken</button>`;
+    document.getElementById('new-acc-iban').addEventListener('input', function() {
+      validateIbanField(this, 'new-acc-hint');
+    });
+  } else if (type === 'user-create') {
+    document.getElementById('modal-title').textContent = 'Gebruiker toevoegen';
+    document.getElementById('modal-body').innerHTML = `
+      <div class="form-group">
+        <label>Gebruikersnaam</label>
+        <input id="new-user-name" type="text" placeholder="jan.janssen">
       </div>
-
-      <!-- BANKS TAB -->
-      <div id="tab-banks" class="tab-content hidden">
-        <div class="card">
-          <h3>Banks (from Clearing Bank)</h3>
-          <table id="tbl-banks"></table>
-        </div>
+      <div class="form-group" style="margin-top:.75rem">
+        <label>Wachtwoord</label>
+        <input id="new-user-pass" type="password" placeholder="••••••••">
       </div>
+      <div class="form-group" style="margin-top:.75rem">
+        <label>Rol</label>
+        <select id="new-user-role">
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>`;
+    document.getElementById('modal-footer').innerHTML = `
+      <button type="button"class="btn btn-ghost" onclick="closeModal()">Annuleren</button>
+      <button type="button"class="btn btn-primary" onclick="doCreateUser()">Aanmaken</button>`;
+  }
+}
 
-    </div><!-- /.container -->
-  </div><!-- /#app -->
+function closeModal() {
+  document.getElementById('modal-overlay').classList.add('hidden');
+}
+function closeModalOverlay(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
 
-  <!-- TOAST -->
-  <div id="toast" class="toast hidden"></div>
+function generateRandomIban() {
+  const bbanStr = Math.floor(Math.random() * 1000000000000).toString().padStart(12, '0');
+  const numericStr = bbanStr + '111400';
+  let remainder = '';
+  for (const ch of numericStr) {
+    remainder = (remainder + ch);
+    if (remainder.length >= 9) remainder = (parseInt(remainder, 10) % 97).toString();
+  }
+  let checkDigit = 98 - (parseInt(remainder, 10) % 97);
+  return 'BE' + checkDigit.toString().padStart(2, '0') + bbanStr;
+}
 
-  <script src="app.js" defer></script>
+async function doCreateAccount() {
+  const iban    = document.getElementById('new-acc-iban').value.trim().replace(/\s/g,'').toUpperCase();
+  const balance = parseFloat(document.getElementById('new-acc-balance').value);
+  if (!iban) { toast('Voer een IBAN in', 'err'); return; }
+  const r = await api('/accounts', { method: 'POST', body: JSON.stringify({ id: iban, balance: isNaN(balance) ? 5000 : balance }) });
+  toast(r.ok ? 'Account aangemaakt: ' + iban : r.message, r.ok ? 'ok' : 'err');
+  if (r.ok) { closeModal(); loadAccounts(); loadStats(); }
+}
+
+async function doCreateUser() {
+  const username = document.getElementById('new-user-name').value.trim();
+  const password = document.getElementById('new-user-pass').value;
+  const role     = document.getElementById('new-user-role').value;
+  if (!username || !password) { toast('Vul alle velden in', 'err'); return; }
+  const r = await api('/users', { method: 'POST', body: JSON.stringify({ username, password, role }) });
+  toast(r.ok ? 'Gebruiker aangemaakt: ' + username : r.message, r.ok ? 'ok' : 'err');
+  if (r.ok) { closeModal(); loadUsers(); }
+}
+
+// ════════════════════════════════════════════════════
+// IBAN VALIDATOR (client-side)
+// ════════════════════════════════════════════════════
+function isValidIban(iban) {
+  if (typeof iban !== 'string' || !/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/.test(iban)) return false;
+  const r = iban.slice(4) + iban.slice(0, 4);
+  const n = r.split('').map(c => /[A-Z]/.test(c) ? (c.charCodeAt(0) - 55).toString() : c).join('');
+  let rem = '';
+  for (const ch of n) { rem += ch; if (rem.length >= 9) rem = (parseInt(rem, 10) % 97).toString(); }
+  return parseInt(rem, 10) % 97 === 1;
+}
+
+function validateIbanField(input, hintId) {
+  const val = input.value.trim().replace(/\s/g, '').toUpperCase();
+  const hint = document.getElementById(hintId);
+  if (!val) { hint.textContent = ''; hint.className = 'hint'; return; }
+  if (isValidIban(val)) {
+    hint.textContent = '✓ Geldig IBAN';
+    hint.className = 'hint iban-val';
+  } else {
+    hint.textContent = '✗ Ongeldig IBAN (mod-97 check mislukt)';
+    hint.className = 'hint iban-err';
+  }
+}
+
+// ════════════════════════════════════════════════════
+// USER VIEW
+// ════════════════════════════════════════════════════
+async function loadOwnAccounts() {
+  const r = await api('/accounts');
+  let allAccounts = r.data || [];
+  if (lockedIban) {
+    allAccounts = allAccounts.filter(a => a.id === lockedIban);
+  }
+  ownAccounts = allAccounts;
+  const opts = ownAccounts.map(a => `<option value="${a.id}">${a.id}</option>`).join('');
+  ['u-iban-sel', 'u-pay-from'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
+  });
+}
+
+async function loadUserAccount() {
+  const iban = document.getElementById('u-iban-sel').value;
+  if (!iban) return;
+  const acc = ownAccounts.find(a => a.id === iban);
+  document.getElementById('u-balance').textContent = acc ? '€ ' + fmt(acc.balance) : '–';
+  document.getElementById('u-iban-display').textContent = iban;
+
+  const r = await api('/transactions?account=' + iban);
+  const tbody = document.querySelector('#tbl-u-tx tbody');
+  const rows = (r.data || []).slice(0, 20);
+  if (!rows.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="4">Geen transacties</td></tr>'; return; }
+  tbody.innerHTML = rows.map(t => `<tr>
+    <td>${fmtDate(t.datetime)}</td>
+    <td style="color:${Number(t.amount)>=0?'var(--ok)':'var(--err)'}"><b>€ ${Number(t.amount)>=0?'+':''}${fmt(t.amount)}</b></td>
+    <td class="mono">${(t.po_id||'–').slice(-20)}</td>
+    <td>${t.isvalid ? '<span class="badge badge-ok">ok</span>' : '<span class="badge badge-err">mislukt</span>'}</td>
+  </tr>`).join('');
+}
+
+async function sendUserPayment() {
+  const from_iban = document.getElementById('u-pay-from').value;
+  const to_iban   = document.getElementById('u-pay-to-iban').value.trim().replace(/\s/g,'').toUpperCase();
+  const to_bic    = (document.getElementById('u-pay-bic').value.trim() || document.getElementById('u-pay-bic-sel').value).toUpperCase();
+  const amount    = parseFloat(document.getElementById('u-pay-amount').value);
+  const message   = document.getElementById('u-pay-msg').value.trim();
+  const resEl     = document.getElementById('u-pay-result');
+
+  if (!from_iban || !to_iban || !to_bic || isNaN(amount) || !message) {
+    resEl.innerHTML = '<span style="color:var(--err)">Vul alle velden correct in.</span>';
+    return;
+  }
+  if (!isValidIban(to_iban)) {
+    resEl.innerHTML = '<span style="color:var(--err)">Ongeldig doel-IBAN.</span>';
+    return;
+  }
+  if (amount <= 0 || amount > 500) {
+    resEl.innerHTML = '<span style="color:var(--err)">Bedrag moet tussen €0.01 en €500 zijn.</span>';
+    return;
+  }
+
+  setBtn('btn-u-send', true, '💸 Betaling versturen');
+  resEl.innerHTML = '';
+  try {
+    const r = await api('/payments', { method: 'POST', body: JSON.stringify({ from_iban, to_iban, to_bic, amount, message }) });
+    if (r.ok) {
+      resEl.innerHTML = `<div style="background:var(--okl);border-radius:6px;padding:.75rem 1rem;color:var(--ok)">
+        ✓ Betaling verstuurd!<br><small>PO: ${r.data?.po_id || '–'}</small>
+      </div>`;
+      await loadOwnAccounts();
+      loadUserHistory();
+    } else {
+      resEl.innerHTML = `<div style="background:var(--errl);border-radius:6px;padding:.75rem 1rem;color:var(--err)">
+        ✗ ${r.message || 'Fout bij versturen'}${r.code ? ' (code ' + r.code + ')' : ''}
+      </div>`;
+    }
+  } catch (e) {
+    resEl.innerHTML = `<div style="background:var(--errl);border-radius:6px;padding:.75rem 1rem;color:var(--err)">Fout: ${e.message}</div>`;
+  } finally {
+    setBtn('btn-u-send', false, '💸 Betaling versturen');
+  }
+}
+
+async function loadUserHistory() {
+  const r = await api('/po_out');
+  const tbody = document.querySelector('#tbl-u-history tbody');
+  const myIbans = new Set(ownAccounts.map(a => a.id));
+  const rows = (r.data || []).filter(p => myIbans.has(p.oa_id));
+  if (!rows.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Geen betalingen gevonden</td></tr>'; return; }
+  tbody.innerHTML = rows.map(p => `<tr>
+    <td>${fmtDate(p.po_datetime)}</td>
+    <td class="mono" title="${p.po_id}">${p.po_id.slice(-20)}</td>
+    <td>€ ${fmt(p.po_amount)}</td>
+    <td class="mono">${p.ba_id}</td>
+    <td>${p.bb_id || '–'}</td>
+    <td>${codeBadge(p.ob_code)}</td>
+    <td>${codeBadge(p.cb_code)}</td>
+    <td>${codeBadge(p.bb_code)}</td>
+  </tr>`).join('');
+}
+
+// ════════════════════════════════════════════════════
+// STARTUP
+// ════════════════════════════════════════════════════
+(async function init() {
+  // Show bank name on login screen from public /info
+  try {
+    const info = await fetch('/api/info').then(r => r.json());
+    const d = info.data || {};
+    if (d.name) document.getElementById('login-bank-name').textContent = d.name;
+    if (d.bic)  document.getElementById('login-bank-bic').textContent  = 'BIC: ' + d.bic;
+  } catch (_) {}
+
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) {
+    // Try to restore session
+    try {
+      const r = await fetch('/api/stats', { headers: { Authorization: 'Bearer ' + token } });
+      if (r.status === 401) { localStorage.removeItem(TOKEN_KEY); return; }
+      // Decode user from token (JWT payload is base64)
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      currentUser = { id: payload.id, username: payload.username, role: payload.role };
+      initApp();
+    } catch (_) { localStorage.removeItem(TOKEN_KEY); }
+  }
+})();
+</script>
 </body>
 </html>
