@@ -1,82 +1,161 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PingFin Bank</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Pingfin Bank — Fadil Azzouzi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen" class="login-box">
+    <h2>🏦 Pingfin Bank Login</h2>
+    <p>Fadil Azzouzi — BIC: <span id="login-bic">...</span></p>
+    <input id="login-username" type="text" placeholder="Username">
+    <input id="login-password" type="password" placeholder="Password">
+    <button type="button" onclick="login()">Login</button>
+    <div id="login-error" class="login-error"></div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="hidden">
     <header>
-        <div class="logo">PingFin Bank</div>
-        <nav>
-            <ul>
-                <li><span id="bank-bic-display">BIC: Laden...</span></li>
-            </ul>
-        </nav>
+      <h1>🏦 Pingfin Bank Dashboard</h1>
+      <div id="bank-info" class="info">Loading...</div>
+      <button type="button" class="small danger" onclick="logout()">Logout</button>
     </header>
 
-    <main class="container">
-        <section class="card" id="dashboard">
-            <h2>Mijn Rekening</h2>
-            <div class="account-info">
-                <div class="info-group">
-                    <p class="label">IBAN Rekeningnummer</p>
-                    <p class="value" id="display-iban">Laden...</p>
-                </div>
-                <div class="info-group">
-                    <p class="label">Actueel Saldo</p>
-                    <p class="value balance" id="display-balance">€ 0,00</p>
-                </div>
-            </div>
-        </section>
+    <div class="container">
 
-        <section class="card" id="transfer">
-            <h2>Geld Overmaken</h2>
-            <form id="transfer-form">
-                <div class="form-group">
-                    <label for="input-iban">Naar Rekening (IBAN):</label>
-                    <input type="text" id="input-iban" placeholder="Bijv. BE19384756283910" required>
-                </div>
-                <div class="form-group">
-                    <label for="input-amount">Bedrag (€):</label>
-                    <input type="number" id="input-amount" step="0.01" min="0.01" placeholder="0.00" required>
-                </div>
+      <!-- TABS -->
+      <div class="tabs">
+        <button type="button" class="tab active" data-tab="dashboard">Dashboard</button>
+        <button type="button" class="tab" data-tab="accounts">Accounts</button>
+        <button type="button" class="tab" data-tab="po_new">PO_NEW</button>
+        <button type="button" class="tab" data-tab="po_out">PO_OUT</button>
+        <button type="button" class="tab" data-tab="po_in">PO_IN</button>
+        <button type="button" class="tab" data-tab="ack_out">ACK_OUT</button>
+        <button type="button" class="tab" data-tab="ack_in">ACK_IN</button>
+        <button type="button" class="tab" data-tab="transactions">Transactions</button>
+        <button type="button" class="tab" data-tab="log">Log</button>
+        <button type="button" class="tab" data-tab="banks">Banks (CB)</button>
+      </div>
 
-                <div class="form-group">
-                    <label for="input-message">Mededeling (optioneel):</label>
-                    <input type="text" id="input-message" placeholder="Waar is deze betaling voor?">
-                </div>
+      <!-- DASHBOARD TAB -->
+      <div id="tab-dashboard" class="tab-content">
+        <div id="stats" class="stats-grid"></div>
 
-                <button type="submit" id="btn-submit">Verzenden</button>
-                <div id="transfer-message" class="hidden"></div>
-            </form>
-        </section>
+        <div class="card">
+          <h3>OB actions (Originating Bank)</h3>
+          <div class="actions">
+            <button type="button" onclick="generatePOs(10)">Generate 10 PO's</button>
+            <button type="button" onclick="processPoNew()">Process PO_NEW</button>
+            <button type="button" onclick="sendPoOut()">Send PO_OUT → CB</button>
+            <button type="button" onclick="pullAcks()">Pull ACK from CB</button>
+          </div>
+        </div>
 
-        <section class="card" id="history">
-            <h2>Transactiegeschiedenis</h2>
-            <div class="table-responsive">
-                <table id="transactions-table">
-                    <thead>
-                        <tr>
-                            <th>Datum &amp; Tijd</th>
-                            <th>Omschrijving (PO_ID)</th>
-                            <th>Status</th>
-                            <th>Bedrag</th>
-                        </tr>
-                    </thead>
-                    <tbody id="transactions-tbody">
-                        <tr>
-                            <td colspan="4" class="text-center">Transacties laden...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+        <div class="card">
+          <h3>BB actions (Beneficiary Bank)</h3>
+          <div class="actions">
+            <button type="button" onclick="pullPo()">Pull PO from CB</button>
+            <button type="button" onclick="processPoIn()">Process PO_IN</button>
+            <button type="button" onclick="sendAckOut()">Send ACK_OUT → CB</button>
+          </div>
+        </div>
 
-    </main>
+        <div class="card">
+          <h3>Combined</h3>
+          <div class="actions">
+            <button type="button" class="success" onclick="runCycle()">Run full cycle (OB + BB)</button>
+          </div>
+        </div>
 
-    <script src="app.js"></script>
+        <div class="card">
+          <h3>Last response</h3>
+          <pre id="last-response">(none yet)</pre>
+        </div>
+      </div>
+
+      <!-- ACCOUNTS TAB -->
+      <div id="tab-accounts" class="tab-content hidden">
+        <div class="card">
+          <h3>Accounts</h3>
+          <table id="tbl-accounts"></table>
+        </div>
+      </div>
+
+      <!-- PO_NEW TAB -->
+      <div id="tab-po_new" class="tab-content hidden">
+        <div class="card">
+          <h3>PO_NEW</h3>
+          <table id="tbl-po_new"></table>
+        </div>
+      </div>
+
+      <!-- PO_OUT TAB -->
+      <div id="tab-po_out" class="tab-content hidden">
+        <div class="card">
+          <h3>PO_OUT</h3>
+          <table id="tbl-po_out"></table>
+        </div>
+      </div>
+
+      <!-- PO_IN TAB -->
+      <div id="tab-po_in" class="tab-content hidden">
+        <div class="card">
+          <h3>PO_IN</h3>
+          <table id="tbl-po_in"></table>
+        </div>
+      </div>
+
+      <!-- ACK_OUT TAB -->
+      <div id="tab-ack_out" class="tab-content hidden">
+        <div class="card">
+          <h3>ACK_OUT</h3>
+          <table id="tbl-ack_out"></table>
+        </div>
+      </div>
+
+      <!-- ACK_IN TAB -->
+      <div id="tab-ack_in" class="tab-content hidden">
+        <div class="card">
+          <h3>ACK_IN</h3>
+          <table id="tbl-ack_in"></table>
+        </div>
+      </div>
+
+      <!-- TRANSACTIONS TAB -->
+      <div id="tab-transactions" class="tab-content hidden">
+        <div class="card">
+          <h3>Transactions</h3>
+          <table id="tbl-transactions"></table>
+        </div>
+      </div>
+
+      <!-- LOG TAB -->
+      <div id="tab-log" class="tab-content hidden">
+        <div class="card">
+          <h3>Log</h3>
+          <table id="tbl-log"></table>
+        </div>
+      </div>
+
+      <!-- BANKS TAB -->
+      <div id="tab-banks" class="tab-content hidden">
+        <div class="card">
+          <h3>Banks (from Clearing Bank)</h3>
+          <table id="tbl-banks"></table>
+        </div>
+      </div>
+
+    </div><!-- /.container -->
+  </div><!-- /#app -->
+
+  <!-- TOAST -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js" defer></script>
 </body>
 </html>

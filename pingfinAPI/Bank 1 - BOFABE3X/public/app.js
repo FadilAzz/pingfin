@@ -1,182 +1,298 @@
-// ==========================================
-// INSTELLINGEN
-// ==========================================
-const API_BASE = 'http://localhost:3000/api'; // Zorg dat dit 3001 is voor Bank 2!
-const MY_BIC = 'BOFABE3X'; // Zorg dat dit FXBBBEBB is voor Bank 2!
+const API = '/api';
+let token = localStorage.getItem('pingfin_token');
+let statsInterval = null;
 
-let myToken = ''; // Hier slaan we ons admin-pasje in op
-let myIban = '';  // Hier slaan we de rekening van deze klant in op
+function byId(id) {
+  return document.getElementById(id);
+}
 
-// ==========================================
-// OPSTARTEN VAN DE APP
-// ==========================================
-document.addEventListener('DOMContentLoaded', async () => {
-    document.getElementById('bank-bic-display').innerText = `BIC: ${MY_BIC}`;
-    
-    // 1. Log stiekem in op de achtergrond
-    await backgroundLogin();
-    
-    // 2. Haal gegevens op als het inloggen is gelukt
-    if (myToken) {
-        await loadAccountData();
-        await loadTransactions();
+// === Auth ===
+async function login() {
+  const username = byId('login-username').value;
+  const password = byId('login-password').value;
+
+  try {
+    const resp = await fetch(API + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const data = await resp.json();
+    if (data.ok) {
+      token = data.data.token;
+      localStorage.setItem('pingfin_token', token);
+      showApp();
+    } else {
+      byId('login-error').textContent = data.message || 'Login failed';
     }
-});
+  } catch (err) {
+    byId('login-error').textContent = err.message;
+  }
+}
 
-// ==========================================
-// FUNCTIES
-// ==========================================
+function logout() {
+  localStorage.removeItem('pingfin_token');
+  token = null;
+  if (statsInterval) {
+    clearInterval(statsInterval);
+    statsInterval = null;
+  }
+  location.reload();
+}
 
-// Functie om de JWT token op te halen
-async function backgroundLogin() {
-    try {
-        const res = await fetch(`${API_BASE}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: 'admin', password: 'admin123' })
-        });
-        const data = await res.json();
-        if (data.token) {
-            myToken = data.token;
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (token) {
+    headers.Authorization = 'Bearer ' + token;
+  }
+
+  const resp = await fetch(API + path, { ...opts, headers });
+  if (resp.status === 401) {
+    logout();
+    return null;
+  }
+
+  return resp.json();
+}
+
+// === UI ===
+function toast(message, kind) {
+  const el = byId('toast');
+  el.textContent = message;
+  el.className = 'toast ' + (kind || '');
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 3500);
+}
+
+function showApp() {
+  byId('login-screen').classList.add('hidden');
+  byId('app').classList.remove('hidden');
+
+  loadInfo();
+  loadStats();
+  switchTab('dashboard');
+
+  if (!statsInterval) {
+    statsInterval = setInterval(loadStats, 5000);
+  }
+}
+
+async function loadInfo() {
+  const data = await api('/info');
+  if (data?.ok) {
+    byId('bank-info').textContent =
+      `${data.data.name} (${data.data.bic}) — ${data.data.members}`;
+  }
+}
+
+async function loadStats() {
+  const data = await api('/stats');
+  if (!data?.ok) {
+    return;
+  }
+
+  const s = data.data;
+  const items = [
+    { label: 'Accounts', value: s.accounts },
+    { label: 'Total Balance', value: 'EUR ' + Number(s.total_balance).toFixed(2) },
+    { label: 'PO_NEW', value: s.po_new },
+    { label: 'PO_OUT', value: s.po_out },
+    { label: 'PO_IN', value: s.po_in },
+    { label: 'ACK_IN', value: s.ack_in },
+    { label: 'ACK_OUT', value: s.ack_out },
+    { label: 'TX OK', value: s.tx_valid },
+    { label: 'TX Failed', value: s.tx_failed },
+    { label: 'Outstanding', value: s.outstanding_payments },
+  ];
+
+  byId('stats').innerHTML = items
+    .map((i) => `<div class="stat"><div class="label">${i.label}</div><div class="value">${i.value}</div></div>`)
+    .join('');
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t) => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+
+  document.querySelectorAll('.tab-content').forEach((c) => {
+    c.classList.toggle('hidden', c.id !== 'tab-' + tab);
+  });
+
+  if (tab !== 'dashboard') {
+    loadTab(tab);
+  }
+}
+
+async function loadTab(tab) {
+  const map = {
+    accounts: { url: '/accounts', cols: ['id', 'balance'] },
+    po_new: { url: '/po_new', cols: ['po_id', 'po_amount', 'po_message', 'oa_id', 'bb_id', 'ba_id', 'status'] },
+    po_out: { url: '/po_out', cols: ['po_id', 'po_amount', 'oa_id', 'bb_id', 'ba_id', 'ob_code', 'cb_code', 'sent_to_cb'] },
+    po_in: { url: '/po_in', cols: ['po_id', 'po_amount', 'ob_id', 'oa_id', 'ba_id', 'bb_code', 'status'] },
+    ack_out: { url: '/ack_out', cols: ['po_id', 'po_amount', 'ob_id', 'bb_code', 'sent_to_cb'] },
+    ack_in: { url: '/ack_in', cols: ['po_id', 'po_amount', 'ob_code', 'cb_code', 'bb_code', 'status'] },
+    transactions: { url: '/transactions', cols: ['id', 'po_id', 'account_id', 'amount', 'datetime', 'isvalid'] },
+    log: { url: '/log', cols: ['datetime', 'type', 'message', 'po_id'] },
+    banks: { url: '/banks', cols: ['id', 'name', 'members'] },
+  };
+
+  const cfg = map[tab];
+  if (!cfg) {
+    return;
+  }
+
+  const data = await api(cfg.url);
+  if (!data?.ok) {
+    toast('Failed to load: ' + (data?.message || 'Unknown error'), 'error');
+    return;
+  }
+
+  renderTable('tbl-' + tab, cfg.cols, data.data || []);
+}
+
+function renderTable(tableId, cols, rows) {
+  const tbl = byId(tableId);
+  const safeRows = Array.isArray(rows) ? rows : [];
+
+  tbl.innerHTML =
+    '<thead><tr>' + cols.map((c) => `<th>${c}</th>`).join('') + '</tr></thead>' +
+    '<tbody>' +
+    safeRows
+      .map((r) => '<tr>' + cols.map((c) => `<td class="code">${formatCell(c, r[c])}</td>`).join('') + '</tr>')
+      .join('') +
+    '</tbody>';
+
+  if (safeRows.length === 0) {
+    tbl.innerHTML +=
+      '<tfoot><tr><td colspan="' + cols.length +
+      '" style="text-align:center;color:var(--muted);padding:2rem;">No data</td></tr></tfoot>';
+  }
+}
+
+function formatCell(col, val) {
+  if (val === null || val === undefined) {
+    return '<span style="color:var(--muted)">-</span>';
+  }
+
+  if (col === 'sent_to_cb' || col === 'isvalid') {
+    return val ? '<span class="badge ok">yes</span>' : '<span class="badge fail">no</span>';
+  }
+
+  if (col === 'status') {
+    const cls = val === 'processed' ? 'ok' : val === 'failed' ? 'fail' : 'pending';
+    return `<span class="badge ${cls}">${val}</span>`;
+  }
+
+  if (col === 'po_amount' || col === 'balance' || col === 'amount') {
+    return Number(val).toFixed(2);
+  }
+
+  if (typeof val === 'object') {
+    return JSON.stringify(val);
+  }
+
+  return String(val);
+}
+
+// === Action wrappers ===
+async function action(path, method, body) {
+  const opts = { method: method || 'GET' };
+  if (body) {
+    opts.body = JSON.stringify(body);
+  }
+
+  const resp = await api(path, opts);
+  const lastResponse = byId('last-response');
+  if (lastResponse) {
+    lastResponse.textContent = JSON.stringify(resp, null, 2);
+  }
+
+  if (resp?.ok) {
+    toast(resp.message || 'OK', 'success');
+  } else {
+    toast(resp?.message || 'Error', 'error');
+  }
+
+  loadStats();
+  return resp;
+}
+
+async function generatePOs(count) {
+  const list = await action('/po_new_generate?count=' + (count || 10));
+  if (list?.ok && list.data?.length) {
+    await action('/po_new_add', 'POST', { data: list.data });
+  }
+}
+
+function processPoNew() {
+  return action('/po_new_process');
+}
+
+function sendPoOut() {
+  return action('/po_out_send');
+}
+
+function pullAcks() {
+  return action('/ack_pull');
+}
+
+function pullPo() {
+  return action('/po_pull');
+}
+
+function processPoIn() {
+  return action('/po_in_process');
+}
+
+function sendAckOut() {
+  return action('/ack_out_send');
+}
+
+function runCycle() {
+  return action('/cycle');
+}
+
+function init() {
+  document.querySelectorAll('.tab').forEach((t) => {
+    t.addEventListener('click', () => switchTab(t.dataset.tab));
+  });
+
+  fetch(API + '/info')
+    .then((r) => r.json())
+    .then((d) => {
+      if (d?.ok) {
+        byId('login-bic').textContent = d.data.bic;
+      }
+    })
+    .catch(() => {
+      byId('login-bic').textContent = '...';
+    });
+
+  if (token) {
+    fetch(API + '/info', { headers: { Authorization: 'Bearer ' + token } })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.ok) {
+          showApp();
         } else {
-            console.error("Inloggen mislukt, controleer je database.");
+          logout();
         }
-    } catch (err) {
-        console.error("Kan de server niet bereiken:", err);
-    }
+      })
+      .catch(() => logout());
+  }
 }
 
-// Functie om saldo en IBAN op te halen
-async function loadAccountData() {
-    try {
-        // We halen alle rekeningen op (publieke route)
-        const res = await fetch(`${API_BASE}/accounts`);
-        const data = await res.json();
-        
-        if (data.data && data.data.length > 0) {
-            // Voor deze demo pakken we de allereerste rekening in de database
-            const account = data.data[0]; 
-            myIban = account.id;
-            
-            document.getElementById('display-iban').innerText = myIban;
-            // Zorg dat het mooi als een bedrag wordt getoond met 2 decimalen
-            document.getElementById('display-balance').innerText = `€ ${parseFloat(account.balance).toFixed(2)}`;
-        }
-    } catch (err) {
-        console.error("Fout bij ophalen account:", err);
-    }
-}
+window.login = login;
+window.logout = logout;
+window.generatePOs = generatePOs;
+window.processPoNew = processPoNew;
+window.sendPoOut = sendPoOut;
+window.pullAcks = pullAcks;
+window.pullPo = pullPo;
+window.processPoIn = processPoIn;
+window.sendAckOut = sendAckOut;
+window.runCycle = runCycle;
 
-// Functie om transactiegeschiedenis op te halen
-async function loadTransactions() {
-    try {
-        const res = await fetch(`${API_BASE}/transactions`, {
-            headers: { 'Authorization': `Bearer ${myToken}` }
-        });
-        const json = await res.json();
-        const tbody = document.getElementById('transactions-tbody');
-        tbody.innerHTML = ''; // Maak tabel eerst leeg
-
-        if (json.data && json.data.length > 0) {
-            // Filter alleen transacties van ONZE geselecteerde rekening
-            const myTx = json.data.filter(tx => tx.account_id === myIban);
-            
-            if (myTx.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Nog geen transacties.</td></tr>';
-                return;
-            }
-
-            myTx.forEach(tx => {
-                const tr = document.createElement('tr');
-                
-                // Bepaal of het erbij of eraf is (groen/rood)
-                const amountClass = parseFloat(tx.amount) >= 0 ? 'amount-positive' : 'amount-negative';
-                const sign = parseFloat(tx.amount) >= 0 ? '+' : '';
-
-                tr.innerHTML = `
-                    <td>${new Date(tx.datetime).toLocaleString('nl-NL')}</td>
-                    <td>${tx.po_id}</td>
-                    <td>${tx.isvalid ? 'Voltooid' : 'Mislukt'}</td>
-                    <td class="${amountClass}">${sign}€ ${Math.abs(tx.amount).toFixed(2)}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        } else {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center">Geen data gevonden.</td></tr>';
-        }
-    } catch (err) {
-        console.error("Fout bij laden transacties:", err);
-    }
-}
-
-// ==========================================
-// FORMULIER VERZENDEN (GELD OVERMAKEN)
-// ==========================================
-document.getElementById('transfer-form').addEventListener('submit', async (e) => {
-    e.preventDefault(); // Voorkom dat de pagina herlaadt
-    
-    const btn = document.getElementById('btn-submit');
-    const msgBox = document.getElementById('transfer-message');
-    
-    const targetIban = document.getElementById('input-iban').value.trim();
-    const amount = parseFloat(document.getElementById('input-amount').value);
-    const message = document.getElementById('input-message').value.trim();
-
-    btn.innerText = "Bezig met verzenden...";
-    btn.disabled = true;
-    msgBox.className = "hidden";
-
-    // Uniek ID genereren voor de betaling
-    const randomId = Math.random().toString(36).substr(2, 6);
-    const po_id = `${MY_BIC}_GUI_${randomId}`;
-    
-    // We gaan ervan uit dat het naar Bank 2 gaat (FXBBBEBB) als test.
-    // In een echte app zou je de BIC afleiden uit het IBAN-nummer.
-    const targetBic = 'FXBBBEBB'; 
-    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-    const payload = {
-        data: [{
-            po_id: po_id,
-            po_amount: amount,
-            po_message: message || "Overschrijving via GUI",
-            po_datetime: now,
-            ob_id: MY_BIC,
-            oa_id: myIban,
-            bb_id: targetBic,
-            ba_id: targetIban
-        }]
-    };
-
-    try {
-        // 1. Voeg toe aan database
-        await fetch(`${API_BASE}/po_new_add`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${myToken}` },
-            body: JSON.stringify(payload)
-        });
-
-        // 2. Valideer lokaal (Geld afschrijven)
-        await fetch(`${API_BASE}/po_new_process`, { headers: { 'Authorization': `Bearer ${myToken}` } });
-
-        // 3. Verzend naar de docent
-        await fetch(`${API_BASE}/po_out_send`, { headers: { 'Authorization': `Bearer ${myToken}` } });
-
-        // Succes! Update de schermen
-        msgBox.innerText = "Transactie succesvol verzonden!";
-        msgBox.className = "msg-success";
-        document.getElementById('transfer-form').reset();
-        
-        // Herlaad de data op het scherm
-        await loadAccountData();
-        await loadTransactions();
-
-    } catch (err) {
-        msgBox.innerText = "Er is een fout opgetreden.";
-        msgBox.className = "msg-error";
-        console.error(err);
-    } finally {
-        btn.innerText = "Verzenden";
-        btn.disabled = false;
-    }
-});
+document.addEventListener('DOMContentLoaded', init);
