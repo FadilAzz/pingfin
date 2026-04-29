@@ -99,8 +99,8 @@ router.post('/payments', async (req, res) => {
     if (!isValidIBAN(from_iban))       return fail(res, { status: 400, code: '3003', message: 'Invalid from_iban (IBAN check failed)' });
     if (!isValidIBAN(to_iban))         return fail(res, { status: 400, code: '3003', message: 'Invalid to_iban (IBAN check failed)' });
     if (!isValidBIC(to_bic))           return fail(res, { status: 400, code: '3003', message: 'Invalid to_bic' });
-    if (!isValidAmount(Number(amount))) return fail(res, { status: 400, code: '3003', message: 'Invalid amount (must be positive, max 2 decimals)' });
-    if (Number(amount) > 500)          return fail(res, { status: 400, code: '3004', message: 'Amount exceeds €500' });
+    if (!isValidAmount(Number(amount))) return fail(res, { status: 400, code: '4003', message: 'Invalid amount (must be positive, max 2 decimals)' });
+    if (Number(amount) > 500)          return fail(res, { status: 400, code: '4002', message: 'Amount exceeds €500' });
 
     const OWN_BIC = process.env.BANK_BIC;
     const po_id   = `${OWN_BIC}_${Date.now()}-${uuidv4().slice(0, 8)}`;

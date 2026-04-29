@@ -37,8 +37,12 @@ async function processPoNew() {
 
     let code = '2000', failReason = null;
 
-    if (errors.length > 0) {
-      code = '3003'; failReason = errors.join('; ');
+    if (Number(po.po_amount) > 500) {
+      code = '4002'; failReason = 'Transaction amount exceeds 500 EUR limit';
+    } else if (Number(po.po_amount) <= 0 || !isValidAmount(Number(po.po_amount))) {
+      code = '4003'; failReason = 'Transaction amount cannot be negative or invalid';
+    } else if (errors.filter(e => !e.includes('amount')).length > 0) {
+      code = '3003'; failReason = errors.filter(e => !e.includes('amount')).join('; ');
     } else if (po.bb_id === OWN_BIC) {
       code = '3007'; failReason = 'Internal payment (OB == BB)';
     } else {
