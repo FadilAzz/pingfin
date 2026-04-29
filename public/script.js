@@ -44,7 +44,7 @@ function toast(msg, type = 'info') {
 async function doLogin() {
   const btn = document.getElementById('btn-login');
   const errEl = document.getElementById('login-error');
-  const bankSel = document.getElementById('inp-bank-sel').value;
+  const bankSel = window.location.origin;
   const username = document.getElementById('inp-user').value.trim();
   const password = document.getElementById('inp-pass').value;
   errEl.textContent = '';
@@ -82,8 +82,7 @@ async function doIbanLogin() {
   if (!iban) { errEl.textContent = 'Voer een IBAN in.'; return; }
   if (!isValidIban(iban)) { errEl.textContent = 'Ongeldig IBAN-formaat.'; return; }
   
-  let bankUrl = 'http://localhost:3001';
-  if (iban.includes('FXBB')) bankUrl = 'http://localhost:3002';
+  let bankUrl = window.location.origin;
 
   btn.disabled = true; btn.textContent = 'Bezig…';
   try {
