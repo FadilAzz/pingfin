@@ -1,5 +1,5 @@
 const { query, transaction } = require('../db/db');
-const { validatePO, nowDatetime } = require('../utils/validators');
+const { validatePO, nowDatetime, isValidAmount } = require('../utils/validators');
 const cb      = require('./cbClient');
 const Logger  = require('./logger');
 

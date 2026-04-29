@@ -85,4 +85,56 @@ router.get('/errorcodes', async (req, res) => {
   });
 });
 
+// === Webhooks (Ontvangen van CB) ===
+
+router.post('/po_in', async (req, res) => {
+  try {
+    const list = req.body.data || req.body || [];
+    if (!Array.isArray(list)) return fail(res, { status: 400, message: 'Expected array of POs' });
+    
+    let stored = 0;
+    for (const po of list) {
+      await query(
+        `INSERT IGNORE INTO po_in
+           (po_id, po_amount, po_message, po_datetime,
+            ob_id, oa_id, ob_code, ob_datetime,
+            cb_code, cb_datetime, bb_id, ba_id, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received')`,
+        [po.po_id, po.po_amount, po.po_message, po.po_datetime,
+         po.ob_id, po.oa_id, po.ob_code, po.ob_datetime,
+         po.cb_code, po.cb_datetime, po.bb_id, po.ba_id]
+      );
+      stored++;
+    }
+    return ok(res, { message: `Received ${list.length} POs, stored ${stored}` });
+  } catch (err) {
+    return fail(res, { status: 500, message: err.message });
+  }
+});
+
+router.post('/ack_in', async (req, res) => {
+  try {
+    const list = req.body.data || req.body || [];
+    if (!Array.isArray(list)) return fail(res, { status: 400, message: 'Expected array of ACKs' });
+
+    let stored = 0;
+    for (const ack of list) {
+      await query(
+        `INSERT IGNORE INTO ack_in
+           (po_id, po_amount, po_message, po_datetime,
+            ob_id, oa_id, ob_code, ob_datetime,
+            cb_code, cb_datetime, bb_id, ba_id, bb_code, bb_datetime)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [ack.po_id, ack.po_amount, ack.po_message, ack.po_datetime,
+         ack.ob_id, ack.oa_id, ack.ob_code, ack.ob_datetime,
+         ack.cb_code, ack.cb_datetime, ack.bb_id, ack.ba_id, ack.bb_code, ack.bb_datetime]
+      );
+      stored++;
+    }
+    return ok(res, { message: `Received ${list.length} ACKs, stored ${stored}` });
+  } catch (err) {
+    return fail(res, { status: 500, message: err.message });
+  }
+});
+
 module.exports = router;

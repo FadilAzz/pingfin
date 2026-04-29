@@ -15,9 +15,10 @@ let lockedIban = null;
 // ════════════════════════════════════════════════════
 async function api(path, opts = {}) {
   const token = localStorage.getItem(TOKEN_KEY);
+  const baseUrl = localStorage.getItem('BANK_API_URL') || '';
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
   if (token) headers['Authorization'] = 'Bearer ' + token;
-  const res = await fetch('/api' + path, { ...opts, headers });
+  const res = await fetch(baseUrl + '/api' + path, { ...opts, headers });
   if (res.status === 401) { doLogout(); throw new Error('Session verlopen'); }
   const json = await res.json().catch(() => ({ ok: false, message: 'Invalid JSON' }));
   return json;
@@ -43,13 +44,14 @@ function toast(msg, type = 'info') {
 async function doLogin() {
   const btn = document.getElementById('btn-login');
   const errEl = document.getElementById('login-error');
+  const bankSel = document.getElementById('inp-bank-sel').value;
   const username = document.getElementById('inp-user').value.trim();
   const password = document.getElementById('inp-pass').value;
   errEl.textContent = '';
   if (!username || !password) { errEl.textContent = 'Vul gebruikersnaam en wachtwoord in.'; return; }
   btn.disabled = true; btn.textContent = 'Bezig…';
   try {
-    const r = await fetch('/api/auth/login', {
+    const r = await fetch(bankSel + '/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
@@ -57,6 +59,7 @@ async function doLogin() {
     const data = await r.json();
     if (!data.ok) { errEl.textContent = data.message || 'Inloggen mislukt.'; return; }
     localStorage.setItem(TOKEN_KEY, data.data.token);
+    localStorage.setItem('BANK_API_URL', bankSel);
     currentUser = data.data.user;
     initApp();
   } catch (e) {
@@ -78,18 +81,25 @@ async function doIbanLogin() {
   errEl.textContent = '';
   if (!iban) { errEl.textContent = 'Voer een IBAN in.'; return; }
   if (!isValidIban(iban)) { errEl.textContent = 'Ongeldig IBAN-formaat.'; return; }
+  
+  let bankUrl = 'http://localhost:3001';
+  if (iban.includes('FXBB')) bankUrl = 'http://localhost:3002';
+
   btn.disabled = true; btn.textContent = 'Bezig…';
   try {
-    const accts = await fetch('/api/accounts').then(r => r.json());
+    // Check if account exists via public endpoint
+    const accts = await fetch(bankUrl + '/api/accounts').then(r => r.json());
     const found = (accts.data || []).find(a => a.id === iban);
     if (!found) { errEl.textContent = 'IBAN niet gevonden in deze bank.'; return; }
-    const loginResp = await fetch('/api/auth/login', {
+    // Auto-login with default credentials
+    const loginResp = await fetch(bankUrl + '/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: 'admin', password: 'admin123' }),
     }).then(r => r.json());
     if (!loginResp.ok) { errEl.textContent = 'Authenticatie mislukt.'; return; }
     localStorage.setItem(TOKEN_KEY, loginResp.data.token);
+    localStorage.setItem('BANK_API_URL', bankUrl);
     lockedIban = iban;
     currentUser = { id: 0, username: iban, role: 'user' };
     initApp();
@@ -128,8 +138,6 @@ async function initApp() {
     const d = info.data || {};
     document.getElementById('hdr-bank').textContent = d.name || 'Pingfin Bank';
     document.getElementById('hdr-bic').textContent  = d.bic  || '';
-    document.getElementById('login-bank-name').textContent = d.name || 'Pingfin Bank';
-    document.getElementById('login-bank-bic').textContent  = 'BIC: ' + (d.bic || '');
   } catch (_) {}
 
   document.getElementById('hdr-user').textContent = currentUser.username;
@@ -760,6 +768,7 @@ function validateIbanField(input, hintId) {
 async function loadOwnAccounts() {
   const r = await api('/accounts');
   let allAccounts = r.data || [];
+  // If logged in via IBAN, only show that one account
   if (lockedIban) {
     allAccounts = allAccounts.filter(a => a.id === lockedIban);
   }
@@ -855,19 +864,12 @@ async function loadUserHistory() {
 // STARTUP
 // ════════════════════════════════════════════════════
 (async function init() {
-  // Show bank name on login screen from public /info
-  try {
-    const info = await fetch('/api/info').then(r => r.json());
-    const d = info.data || {};
-    if (d.name) document.getElementById('login-bank-name').textContent = d.name;
-    if (d.bic)  document.getElementById('login-bank-bic').textContent  = 'BIC: ' + d.bic;
-  } catch (_) {}
-
   const token = localStorage.getItem(TOKEN_KEY);
+  const baseUrl = localStorage.getItem('BANK_API_URL') || '';
   if (token) {
     // Try to restore session
     try {
-      const r = await fetch('/api/stats', { headers: { Authorization: 'Bearer ' + token } });
+      const r = await fetch(baseUrl + '/api/stats', { headers: { Authorization: 'Bearer ' + token } });
       if (r.status === 401) { localStorage.removeItem(TOKEN_KEY); return; }
       // Decode user from token (JWT payload is base64)
       const payload = JSON.parse(atob(token.split('.')[1]));

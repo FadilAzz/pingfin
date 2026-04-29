@@ -17,14 +17,21 @@
   <div class="login-card">
     <div class="logo">
       <span class="icon">🏦</span>
-      <h1 id="login-bank-name">Pingfin Bank</h1>
-      <p id="login-bank-bic">BIC: ...</p>
+      <h1 id="login-bank-name">Pingfin Centraal Portaal</h1>
+      <p id="login-bank-bic">Kies uw bank om in te loggen</p>
     </div>
+    
+    <label for="inp-bank-sel">Bank</label>
+    <select id="inp-bank-sel" style="margin-bottom: 1rem;">
+      <option value="http://localhost:3001">Bank 1 (BOFABE3X)</option>
+      <option value="http://localhost:3002">Bank 2 (FXBBBEBB)</option>
+    </select>
+
     <label for="inp-user">Gebruikersnaam</label>
     <input id="inp-user" type="text" placeholder="admin" autocomplete="username">
     <label for="inp-pass">Wachtwoord</label>
     <input id="inp-pass" type="password" placeholder="••••••••" autocomplete="current-password">
-    <button type="button"class="btn-login" id="btn-login" onclick="doLogin()">Inloggen als admin</button>
+    <button type="button" class="btn-login" id="btn-login" onclick="doLogin()">Inloggen als admin</button>
     <div id="login-error"></div>
     <div style="display:flex;align-items:center;gap:.75rem;margin:1.25rem 0;color:var(--muted)">
       <div style="flex:1;height:1px;background:var(--border)"></div>
@@ -48,7 +55,10 @@
       <span>Ingelogd als: <b id="hdr-user"></b></span>
       <span id="hdr-role-badge"></span>
     </div>
-    <button type="button"id="btn-logout" onclick="doLogout()">Uitloggen</button>
+    <div style="display:flex;gap:1rem;align-items:center;">
+      <a href="/docs.html" target="_blank" style="color:white;text-decoration:none;font-size:0.85rem;font-weight:600;opacity:0.8;transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">📚 API Docs</a>
+      <button type="button" id="btn-logout" onclick="doLogout()">Uitloggen</button>
+    </div>
   </header>
 
   <!-- ─── ADMIN VIEW ─────────────────────────────────────── -->
