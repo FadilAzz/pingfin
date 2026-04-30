@@ -1,7 +1,9 @@
 const axios = require('axios');
 require('dotenv').config();
 
-const BASE_URL = process.env.CB_BASE_URL || 'https://fadilazzouzi-odisee.be/pingfin/api/v2';
+let BASE_URL = process.env.CB_BASE_URL || 'https://stevenop.be/pingfin/api/v2';
+if (BASE_URL.endsWith('/')) BASE_URL = BASE_URL.slice(0, -1);
+
 const BIC = process.env.CB_BIC;
 const SECRET = process.env.CB_SECRET_KEY;
 

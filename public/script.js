@@ -721,6 +721,12 @@ async function doCreateAccount() {
   const iban    = document.getElementById('new-acc-iban').value.trim().replace(/\s/g,'').toUpperCase();
   const balance = parseFloat(document.getElementById('new-acc-balance').value);
   if (!iban) { toast('Voer een IBAN in', 'err'); return; }
+  
+  if (!isValidIban(iban)) {
+    toast('Ongeldig IBAN-formaat (mod-97 check mislukt)', 'err');
+    return;
+  }
+
   const r = await api('/accounts', { method: 'POST', body: JSON.stringify({ id: iban, balance: isNaN(balance) ? 5000 : balance }) });
   toast(r.ok ? 'Account aangemaakt: ' + iban : r.message, r.ok ? 'ok' : 'err');
   if (r.ok) { closeModal(); loadAccounts(); loadStats(); }
