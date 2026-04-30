@@ -22,25 +22,29 @@ Open: <http://localhost:3000> or your deployed domain — Login: `admin` / `admi
 
 | Method | URL | Auth | Beschrijving |
 |--------|-----|------|-------------|
-| GET  | `/api/help`             | ✅ | Overzicht endpoints |
-| GET  | `/api/info`             | ✅ | Bank BIC, naam, members |
-| GET  | `/api/accounts`         | ✅ | Lijst accounts |
-| GET  | `/api/banks`            | ✅ | Banken via CB |
-| GET  | `/api/errorcodes`       | ✅ | Foutcodes |
-| POST | `/api/auth/login`       | ✅ | Login → JWT |
-| GET  | `/api/po_new_generate`  | ✅ | Genereer random PO's |
-| POST | `/api/po_new_add`       | ✅ | PO's toevoegen aan PO_NEW |
-| GET  | `/api/po_new_process`   | ✅ | Valideer PO_NEW → PO_OUT |
-| GET  | `/api/po_out_send`      | ✅ | PO_OUT → CB |
-| GET  | `/api/po_pull`          | ✅ | CB → PO_IN (BB) |
-| GET  | `/api/po_in_process`    | ✅ | PO_IN verwerken, BA crediteren |
-| GET  | `/api/ack_out_send`     | ✅ | ACK_OUT → CB (BB) |
-| GET  | `/api/ack_pull`         | ✅ | CB → ACK_IN (OB) |
-| GET  | `/api/cycle`            | ✅ | Alle stappen in één keer |
-| GET  | `/api/stats`            | ✅ | Dashboard statistieken |
-| GET  | `/api/po_new` … `ack_out` | ✅ | Tabellen inzien |
-| GET  | `/api/transactions`     | ✅ | Transacties |
-| GET  | `/api/log`              | ✅ | Logs |
+| GET  | `/api/help`                | ✅ | Overzicht endpoints |
+| GET  | `/api/info`                | ✅ | Bank BIC, naam, members |
+| GET  | `/api/accounts`            | ✅ | Lijst accounts |
+| GET  | `/api/banks`               | ✅ | Banken via CB |
+| GET  | `/api/errorcodes`          | ✅ | Foutcodes |
+| POST | `/api/auth/login`          | ✅ | Login → JWT |
+| GET  | `/api/po_new_generate`     | ✅ | Genereer random PO's |
+| POST | `/api/po_new_add`          | ✅ | PO's toevoegen aan PO_NEW |
+| GET  | `/api/po_new_process`      | ✅ | Valideer PO_NEW → PO_OUT |
+| GET  | `/api/po_out_send`         | ✅ | PO_OUT → CB |
+| GET  | `/api/po_pull`             | ✅ | CB → PO_IN (BB) |
+| GET  | `/api/po_in_process`       | ✅ | PO_IN verwerken, BA crediteren |
+| GET  | `/api/ack_out_send`        | ✅ | ACK_OUT → CB (BB) |
+| GET  | `/api/ack_pull`            | ✅ | CB → ACK_IN (OB) |
+| GET  | `/api/cycle`               | ✅ | Alle stappen in één keer |
+| GET  | `/api/stats`               | ✅ | Dashboard statistieken |
+| GET  | `/api/po_new`              | ✅ | Tabellen inzien |
+| GET  | `/api/po_out`              | ✅ | Tabellen inzien |
+| GET  | `/api/po_in`               | ✅ | Tabellen inzien |
+| GET  | `/api/ack_out`             | ✅ | Tabellen inzien |
+| GET  | `/api/ack_in`              | ✅ | Tabellen inzien |
+| GET  | `/api/transactions`        | ✅ | Transacties |
+| GET  | `/api/log`                 | ✅ | Logs |
 
 ---
 
