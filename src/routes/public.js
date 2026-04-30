@@ -123,8 +123,8 @@ router.post('/ack_in', async (req, res) => {
         `INSERT IGNORE INTO ack_in
            (po_id, po_amount, po_message, po_datetime,
             ob_id, oa_id, ob_code, ob_datetime,
-            cb_code, cb_datetime, bb_id, ba_id, bb_code, bb_datetime)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            cb_code, cb_datetime, bb_id, ba_id, bb_code, bb_datetime, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
         [ack.po_id, ack.po_amount, ack.po_message, ack.po_datetime,
          ack.ob_id, ack.oa_id, ack.ob_code, ack.ob_datetime,
          ack.cb_code, ack.cb_datetime, ack.bb_id, ack.ba_id, ack.bb_code, ack.bb_datetime]

@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS ack_in (
     ba_id       VARCHAR(34),
     bb_code     VARCHAR(10),
     bb_datetime DATETIME,
-
+    status      VARCHAR(20) DEFAULT 'pending',
     received_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

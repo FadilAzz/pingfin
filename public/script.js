@@ -618,7 +618,7 @@ function syncBicField() {
 }
 function syncUserBicField() {
   const v = document.getElementById('u-pay-bic-sel').value;
-  if (v) document.getElementById('u-pay-bic').value = v;
+  if (v) document.getElementById('input-bic').value = v;
 }
 
 // ════════════════════════════════════════════════════
@@ -801,7 +801,7 @@ async function loadUserAccount() {
 async function sendUserPayment() {
   const from_iban = document.getElementById('u-pay-from').value;
   const to_iban   = document.getElementById('u-pay-to-iban').value.trim().replace(/\s/g,'').toUpperCase();
-  const to_bic    = (document.getElementById('u-pay-bic').value.trim() || document.getElementById('u-pay-bic-sel').value).toUpperCase();
+  const to_bic    = (document.getElementById('input-bic').value.trim() || document.getElementById('u-pay-bic-sel').value).toUpperCase();
   const amount    = parseFloat(document.getElementById('u-pay-amount').value);
   const message   = document.getElementById('u-pay-msg').value.trim();
   const resEl     = document.getElementById('u-pay-result');

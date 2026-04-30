@@ -36,25 +36,58 @@ async function processPoNew() {
     });
 
     let code = '2000', failReason = null;
+    const ob_datetime = nowDatetime();
 
-    if (Number(po.po_amount) > 500) {
-      code = '4002'; failReason = 'Transaction amount exceeds 500 EUR limit';
-    } else if (Number(po.po_amount) <= 0 || !isValidAmount(Number(po.po_amount))) {
-      code = '4003'; failReason = 'Transaction amount cannot be negative or invalid';
-    } else if (errors.filter(e => !e.includes('amount')).length > 0) {
-      code = '3003'; failReason = errors.filter(e => !e.includes('amount')).join('; ');
-    } else if (po.bb_id === OWN_BIC) {
-      code = '3007'; failReason = 'Internal payment (OB == BB)';
+    if (po.bb_id === OWN_BIC) {
+      // --- INTERNAL PAYMENT HANDLER ---
+      const ba_accs = await query('SELECT id FROM accounts WHERE id = ?', [po.ba_id]);
+      if (ba_accs.length === 0) {
+        code = '5001'; failReason = 'Beneficiary account (BA) not found in this bank';
+      } else {
+        const oa_accs = await query('SELECT balance FROM accounts WHERE id = ?', [po.oa_id]);
+        if (oa_accs.length === 0) {
+          code = '3001'; failReason = 'OA not found';
+        } else if (Number(oa_accs[0].balance) < Number(po.po_amount)) {
+          code = '3002'; failReason = 'Insufficient balance';
+        } else {
+          try {
+            await transaction(async (conn) => {
+              await conn.execute('UPDATE accounts SET balance = balance - ? WHERE id = ?', [po.po_amount, po.oa_id]);
+              await conn.execute('UPDATE accounts SET balance = balance + ? WHERE id = ?', [po.po_amount, po.ba_id]);
+              await conn.execute(
+                'INSERT INTO transactions (amount, datetime, po_id, account_id, isvalid, iscomplete) VALUES (?, ?, ?, ?, 1, 1)',
+                [-Math.abs(Number(po.po_amount)), ob_datetime, po.po_id, po.oa_id]);
+              await conn.execute(
+                'INSERT INTO transactions (amount, datetime, po_id, account_id, isvalid, iscomplete) VALUES (?, ?, ?, ?, 1, 1)',
+                [Math.abs(Number(po.po_amount)), ob_datetime, po.po_id, po.ba_id]);
+              await conn.execute("UPDATE po_new SET status = 'processed', ob_code = '2000', ob_datetime = ? WHERE po_id = ?",
+                [ob_datetime, po.po_id]);
+            });
+            await Logger.po_out('Internal PO processed locally', { ...po, ob_code: '2000', ob_datetime });
+            results.passed.push(po.po_id);
+            continue;
+          } catch (err) {
+            code = '9999'; failReason = `Internal transfer failed: ${err.message}`;
+          }
+        }
+      }
     } else {
-      const accs = await query('SELECT balance FROM accounts WHERE id = ?', [po.oa_id]);
-      if (accs.length === 0) {
-        code = '3001'; failReason = 'OA not found';
-      } else if (Number(accs[0].balance) < Number(po.po_amount)) {
-        code = '3002'; failReason = 'Insufficient balance';
+      // --- EXTERNAL PAYMENT VALIDATION ---
+      if (Number(po.po_amount) > 500) {
+        code = '4002'; failReason = 'Transaction amount exceeds 500 EUR limit';
+      } else if (Number(po.po_amount) <= 0 || !isValidAmount(Number(po.po_amount))) {
+        code = '4003'; failReason = 'Transaction amount cannot be negative or invalid';
+      } else if (errors.filter(e => !e.includes('amount')).length > 0) {
+        code = '3003'; failReason = errors.filter(e => !e.includes('amount')).join('; ');
+      } else {
+        const accs = await query('SELECT balance FROM accounts WHERE id = ?', [po.oa_id]);
+        if (accs.length === 0) {
+          code = '3001'; failReason = 'OA not found';
+        } else if (Number(accs[0].balance) < Number(po.po_amount)) {
+          code = '3002'; failReason = 'Insufficient balance';
+        }
       }
     }
-
-    const ob_datetime = nowDatetime();
 
     if (code !== '2000') {
       await query("UPDATE po_new SET status = 'failed', ob_code = ?, ob_datetime = ? WHERE po_id = ?",
@@ -119,24 +152,48 @@ async function pullAcksFromCB() {
   const acks = resp?.data || [];
   if (!Array.isArray(acks) || acks.length === 0) return { received: 0, message: 'No ACKs available' };
 
-  let processed = 0;
+  let stored = 0;
   for (const ack of acks) {
     try {
-      await transaction(async (conn) => {
-        await conn.execute(
-          `INSERT IGNORE INTO ack_in
-             (po_id, po_amount, po_message, po_datetime,
-              ob_id, oa_id, ob_code, ob_datetime,
-              cb_code, cb_datetime, bb_id, ba_id, bb_code, bb_datetime)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [ack.po_id, ack.po_amount, ack.po_message, ack.po_datetime,
-           ack.ob_id, ack.oa_id, ack.ob_code, ack.ob_datetime,
-           ack.cb_code, ack.cb_datetime, ack.bb_id, ack.ba_id, ack.bb_code, ack.bb_datetime]
-        );
+      await query(
+        `INSERT IGNORE INTO ack_in
+           (po_id, po_amount, po_message, po_datetime,
+            ob_id, oa_id, ob_code, ob_datetime,
+            cb_code, cb_datetime, bb_id, ba_id, bb_code, bb_datetime, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+        [ack.po_id, ack.po_amount, ack.po_message, ack.po_datetime,
+         ack.ob_id, ack.oa_id, ack.ob_code, ack.ob_datetime,
+         ack.cb_code, ack.cb_datetime, ack.bb_id, ack.ba_id, ack.bb_code, ack.bb_datetime]
+      );
+      stored++;
+    } catch (err) {
+      await Logger.error(`Failed to store ACK: ${err.message}`, ack);
+    }
+  }
+  
+  // Auto-process the ACKs immediately after pulling
+  const processResult = await processAcks();
+  
+  return { 
+    received: acks.length, 
+    stored, 
+    processed: processResult.processed.length,
+    failed: processResult.failed.length 
+  };
+}
 
+async function processAcks() {
+  const pending = await query("SELECT * FROM ack_in WHERE status = 'pending'");
+  const results = { processed: [], failed: [] };
+
+  for (const ack of pending) {
+    try {
+      await transaction(async (conn) => {
+        // Only settle if both CB and BB approved
         if (String(ack.bb_code) === '2000' && String(ack.cb_code) === '2000') {
           const [existing] = await conn.execute(
             'SELECT id FROM transactions WHERE po_id = ? AND account_id = ?', [ack.po_id, ack.oa_id]);
+          
           if (existing.length === 0) {
             await conn.execute('UPDATE accounts SET balance = balance - ? WHERE id = ?', [ack.po_amount, ack.oa_id]);
             await conn.execute(
@@ -144,18 +201,21 @@ async function pullAcksFromCB() {
               [-Math.abs(Number(ack.po_amount)), nowDatetime(), ack.po_id, ack.oa_id]);
           }
         } else {
+          // If failed, still log it as a failed transaction (deduct nothing)
           await conn.execute(
             'INSERT INTO transactions (amount, datetime, po_id, account_id, isvalid, iscomplete) VALUES (?, ?, ?, ?, 0, 1)',
-            [-Math.abs(Number(ack.po_amount)), nowDatetime(), ack.po_id, ack.oa_id]);
+            [0, nowDatetime(), ack.po_id, ack.oa_id]);
         }
+        await conn.execute("UPDATE ack_in SET status = 'processed' WHERE po_id = ?", [ack.po_id]);
       });
       await Logger.ack_in(`ACK processed (cb=${ack.cb_code}, bb=${ack.bb_code})`, ack);
-      processed++;
+      results.processed.push(ack.po_id);
     } catch (err) {
-      await Logger.error(`Failed to process ACK: ${err.message}`, ack);
+      await Logger.error(`Failed to process local ACK: ${err.message}`, ack);
+      results.failed.push({ po_id: ack.po_id, error: err.message });
     }
   }
-  return { received: acks.length, processed };
+  return results;
 }
 
-module.exports = { addToPoNew, processPoNew, sendPoOutToCB, pullAcksFromCB };
+module.exports = { addToPoNew, processPoNew, sendPoOutToCB, pullAcksFromCB, processAcks };

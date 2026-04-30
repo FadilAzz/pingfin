@@ -8,7 +8,7 @@ Stack: **Node.js 20 + Express.js + MySQL/MariaDB**
 
 ## Snel starten
 
-### Optie A: Docker Compose (aanbevolen voor deployment)
+### Docker Compose (aanbevolen voor deployment)
 
 ```bash
 docker-compose up --build
@@ -16,27 +16,18 @@ docker-compose up --build
 
 Open: <http://localhost:3000> or your deployed domain — Login: `admin` / `admin123`
 
-### Optie B: Lokaal
-
-```bash
-npm install
-# Pas .env aan met jouw DB-gegevens
-npm run init-db    # maakt database + tabellen + 20 accounts + admin user
-npm start          # of: npm run dev  (met nodemon, auto-restart)
-```
-
 ---
 
 ## API endpoints
 
 | Method | URL | Auth | Beschrijving |
 |--------|-----|------|-------------|
-| GET  | `/api/help`             | ❌ | Overzicht endpoints |
-| GET  | `/api/info`             | ❌ | Bank BIC, naam, members |
-| GET  | `/api/accounts`         | ❌ | Lijst accounts |
-| GET  | `/api/banks`            | ❌ | Banken via CB |
-| GET  | `/api/errorcodes`       | ❌ | Foutcodes |
-| POST | `/api/auth/login`       | ❌ | Login → JWT |
+| GET  | `/api/help`             | ✅ | Overzicht endpoints |
+| GET  | `/api/info`             | ✅ | Bank BIC, naam, members |
+| GET  | `/api/accounts`         | ✅ | Lijst accounts |
+| GET  | `/api/banks`            | ✅ | Banken via CB |
+| GET  | `/api/errorcodes`       | ✅ | Foutcodes |
+| POST | `/api/auth/login`       | ✅ | Login → JWT |
 | GET  | `/api/po_new_generate`  | ✅ | Genereer random PO's |
 | POST | `/api/po_new_add`       | ✅ | PO's toevoegen aan PO_NEW |
 | GET  | `/api/po_new_process`   | ✅ | Valideer PO_NEW → PO_OUT |
@@ -50,31 +41,6 @@ npm start          # of: npm run dev  (met nodemon, auto-restart)
 | GET  | `/api/po_new` … `ack_out` | ✅ | Tabellen inzien |
 | GET  | `/api/transactions`     | ✅ | Transacties |
 | GET  | `/api/log`              | ✅ | Logs |
-
----
-
-## Database
-
-Jullie eigen tabelstructuur uit `pingfin.sql`, vertaald naar MySQL. Alle kolomnamen zijn identiek gehouden. Extra toevoegingen t.o.v. het originele schema:
-
-- `users` tabel — voor login
-- `po_new.status` — `pending` / `processed` / `failed`
-- `po_in.status` — `received` / `processed` / `failed`
-- `po_out.sent_to_cb` — `0` / `1`
-- `ack_out.sent_to_cb` — `0` / `1`
-- `ack_in.received_at` — tijdstip van ontvangst
-
----
-
-## Dag 3: testen met andere teams
-
-Pas `SAMPLE_BBS` aan in `src/services/poGenerator.js` met de echte BIC's:
-
-```js
-const SAMPLE_BBS = ['TEAMXBIC', 'TEAMYBIC', ...];
-```
-
-Haal de BIC's op via: `GET /api/banks`
 
 ---
 
