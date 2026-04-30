@@ -3,7 +3,7 @@
 
 const CODES = {
   // General
-  '2000': { type: 'general',  description: 'OK' },
+  '2000': { type: 'general', description: 'OK' },
 
   // OB validation errors (own)
   '3001': { type: 'ob_error', description: 'Originating account (OA) not found in this bank' },
